@@ -1,0 +1,127 @@
+[build-system]
+requires = [
+    "scikit-build-core",
+    "numpy >= 1.20.0, < 2.0.0",
+    "swig >= 4.2.1",
+    "ninja",
+    #"cmake >= 3.20",
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "mfem"
+version = "4.7.0.1"
+description = "MFEM + PyMFEM (finite element method library)"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "BSD-3-Clause"}
+authors = [
+    {name = "MFEM development team"},
+    {name = "S. Shiraiwa", email = "shiraiwa@princeton.edu"},
+]
+keywords = ["scientific computing", "finite element method"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Physics",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "numpy >= 1.20.0, < 2.0.0",
+    "numba",
+    "numba-scipy",
+    "scipy",
+    "swig",
+    "mpi4py",
+    "pip",
+    "setuptools",
+    "scikit-build-core",
+    "ninja",
+]
+
+[project.urls]
+Homepage = "http://mfem.org"
+Download = "https://github.com/mfem/PyMFEM"
+Repository = "https://github.com/mfem/PyMFEM"
+
+[tool.scikit-build]
+# Minimum version of scikit-build-core
+minimum-version = "0.2"
+
+# CMake configuration
+cmake.minimum-version = "4.0"
+cmake.build-type = "Release"
+cmake.verbose = true
+
+cmake.args = [
+  "-DCMAKE_CXX_FLAGS=-std=c++11",
+  "-DCMAKE_EXE_LINKER_FLAGS=-std=c++11",
+  "-DCMAKE_SHARED_LINKER_FLAGS=-std=c++11",
+]
+
+# Build configuration for wheels
+wheel.packages = ["mfem"]
+wheel.license-files = ["LICENSE"]
+
+# Include data files in wheel
+# wheel.install-dir = "mfem"  # Removed to avoid double mfem/ prefix
+
+# Source distribution configuration
+sdist.include = [
+    "mfem/",
+    "examples/",
+    "data/",
+    "headers/",
+    "requirements.txt",
+    "CMakeLists.txt",
+]
+sdist.exclude = [
+    "build/",
+    "*.egg-info/",
+    "__pycache__/",
+    "*.pyc",
+    "*.pyo",
+    ".git/",
+    ".github/",
+    "external/",
+]
+
+# Configuration options that can be set via environment variables or config-settings
+[tool.scikit-build.cmake.define]
+# C++ standard enforcement
+CMAKE_CXX_STANDARD = "11"
+CMAKE_CXX_STANDARD_REQUIRED = "ON"
+CMAKE_CXX_EXTENSIONS = "OFF"
+
+# Build options (can be overridden)
+BUILD_PARALLEL = {env = "PYMFEM_BUILD_PARALLEL", default = "OFF"}
+BUILD_METIS = {env = "PYMFEM_BUILD_METIS", default = "OFF"}
+BUILD_HYPRE = {env = "PYMFEM_BUILD_HYPRE", default = "OFF"}
+BUILD_LIBCEED = {env = "PYMFEM_BUILD_LIBCEED", default = "OFF"}
+BUILD_GSLIB = {env = "PYMFEM_BUILD_GSLIB", default = "OFF"}
+ENABLE_CUDA = {env = "PYMFEM_ENABLE_CUDA", default = "OFF"}
+ENABLE_SUITESPARSE = {env = "PYMFEM_ENABLE_SUITESPARSE", default = "OFF"}
+ENABLE_LAPACK = {env = "PYMFEM_ENABLE_LAPACK", default = "OFF"}
+
+# Path configurations
+MFEM_SOURCE = {env = "PYMFEM_MFEM_SOURCE", default = "./external/mfem"}
+EXT_PREFIX = {env = "PYMFEM_EXT_PREFIX", default = ""}
+
+# Compiler configurations
+CC_COMMAND = {env = "CC", default = "cc"}
+CXX_COMMAND = {env = "CXX", default = "c++"}
+MPICC_COMMAND = {env = "MPICC", default = "mpicc"}
+MPICXX_COMMAND = {env = "MPICXX", default = "mpic++"}
+
+# Additional CMake arguments can be passed via cmake.args list
+
+[tool.scikit-build.logging]
+level = "INFO"
+
+# Version configuration - using static version for now
+# TODO: Configure dynamic version reading from mfem/__init__.py
