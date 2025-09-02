@@ -71,8 +71,19 @@ option(ENABLE_PUMI "Enable PUMI" OFF)
 option(ENABLE_STRUMPACK "Enable STRUMPACK" OFF)
 
 # Path configurations
-set(EXT_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external CACHE PATH "External libraries prefix")
+# If EXT_PREFIX is empty or not set, use a default location
+if(NOT EXT_PREFIX OR EXT_PREFIX STREQUAL "")
+    set(EXT_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external CACHE PATH "External libraries prefix" FORCE)
+endif()
+
+# Ensure EXT_PREFIX is absolute
+if(NOT IS_ABSOLUTE ${EXT_PREFIX})
+    get_filename_component(EXT_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/${EXT_PREFIX}" ABSOLUTE)
+endif()
+
 set(MFEM_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/external/mfem CACHE PATH "MFEM source directory")
+
+message(STATUS "PyMFEM: EXT_PREFIX = ${EXT_PREFIX} (absolute)")
 
 # Compiler configurations (can be overridden by environment)
 set(CC_COMMAND "cc" CACHE STRING "C compiler command")
@@ -458,7 +469,7 @@ function(build_mfem_parallel)
         -DHYPRE_INCLUDE_DIRS=${EXT_PREFIX}/include
         -DMFEM_USE_METIS_5=ON
         -DMETIS_DIR=${EXT_PREFIX}
-        -DMETIS_INCLUDE_DIRS=${EXT_PREFIX}/include
+        -DMETIS_INCLUDE_DIRS=${CMAKE_CURRENT_SOURCE_DIR}/external/metis/include
     )
     
     execute_process(
