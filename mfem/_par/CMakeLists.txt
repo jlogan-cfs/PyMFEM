@@ -6,6 +6,13 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Enable verbose logging for debugging
+message(STATUS "PyMFEM _par: Starting parallel module build")
+message(STATUS "PyMFEM _par: CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "PyMFEM _par: CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
+message(STATUS "PyMFEM _par: MFEM_SOURCE = ${MFEM_SOURCE}")
+message(STATUS "PyMFEM _par: EXT_PREFIX = ${EXT_PREFIX}")
+
 # Find required packages
 find_package(PkgConfig REQUIRED)
 find_package(MPI REQUIRED)
@@ -26,16 +33,17 @@ file(GLOB SWIG_INTERFACES "${CMAKE_CURRENT_SOURCE_DIR}/*.i")
 
 # Include directories for parallel build
 # Include both MFEM source (for .hpp files) and build directory (for config.hpp)
-# Note: Avoiding SWIG_LIB_DIR includes to prevent std_except.i version conflicts
+# Include METIS and HYPRE for parallel dependencies
 include_directories(
     ${Python_INCLUDE_DIRS}
     ${MPI_CXX_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../common
     ${MFEM_SOURCE}
-    ${MFEM_SOURCE}/build
-    ${MFEM_SOURCE}/build/config
-    ${MFEM_SOURCE}/build/install/include
+    ${MFEM_SOURCE}/build_par
+    ${MFEM_SOURCE}/build_par/config
+    ${MFEM_SOURCE}/build_par/install/include
+    ${EXT_PREFIX}/include
 )
 
 # Find numpy include directory
@@ -55,14 +63,18 @@ execute_process(
 )
 if(MPI4PY_INCLUDE_DIR)
     include_directories(${MPI4PY_INCLUDE_DIR})
+    message(STATUS "PyMFEM _par: MPI4PY_INCLUDE_DIR = ${MPI4PY_INCLUDE_DIR}")
+else()
+    message(WARNING "PyMFEM _par: mpi4py not found - parallel build may fail")
 endif()
 
 # Create SWIG modules for each interface
 foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     get_filename_component(MODULE_NAME ${SWIG_INTERFACE} NAME_WE)
     
-    # Skip certain modules that require special handling
+    # Skip certain modules that require special handling - they're handled separately below
     if(MODULE_NAME MATCHES "^(lininteg|bilininteg)$")
+        message(STATUS "PyMFEM _par: Skipping ${MODULE_NAME} - will be handled separately")
         continue()
     endif()
     
@@ -73,6 +85,17 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     
     # Set C++ properties before creating the library
     set_property(SOURCE ${SWIG_INTERFACE} PROPERTY CPLUSPLUS ON)
+    
+    # Add SWIG include directories for this interface (matching legacy setup.py)
+    set_property(SOURCE ${SWIG_INTERFACE} PROPERTY SWIG_FLAGS 
+        "-I${SWIG_LIB_DIR}/python"
+        "-I${MFEM_SOURCE}"
+        "-I${MFEM_SOURCE}/build_par/install/include"
+        "-I${EXT_PREFIX}/include"
+        "-I${MPI4PY_INCLUDE_DIR}"
+    )
+    
+    message(VERBOSE "PyMFEM _par: Creating SWIG library for ${MODULE_NAME}")
     
     swig_add_library(${MODULE_NAME}
         TYPE MODULE
@@ -105,11 +128,31 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
         endif()
     endforeach()
     
-    # Link against Python, MPI, and MFEM
+    # Add preprocessor definitions matching legacy setup.py
+    target_compile_definitions(${MODULE_NAME} PRIVATE
+        SWIG_TYPE_TABLE=PyMFEM
+        TARGET_PY3=1
+        NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+    )
+    
+    # Link against Python, MPI, parallel MFEM, and dependencies
+    # Platform-specific library extensions
+    if(APPLE)
+        set(MFEM_LIB "${MFEM_SOURCE}/build_par/install/lib/libmfem.dylib")
+        set(HYPRE_LIB "${EXT_PREFIX}/lib/libHYPRE.dylib") 
+        set(METIS_LIB "${EXT_PREFIX}/lib/libmetis.dylib")
+    else()
+        set(MFEM_LIB "${MFEM_SOURCE}/build_par/install/lib/libmfem.so")
+        set(HYPRE_LIB "${EXT_PREFIX}/lib/libHYPRE.so")
+        set(METIS_LIB "${EXT_PREFIX}/lib/libmetis.so")
+    endif()
+    
     target_link_libraries(${MODULE_NAME} 
         Python::Module 
         ${MPI_CXX_LIBRARIES}
-        ${MFEM_SOURCE}/build/libmfem.a
+        ${MFEM_LIB}
+        ${HYPRE_LIB}
+        ${METIS_LIB}
     )
     
     # Install the module
@@ -121,6 +164,135 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.py
             DESTINATION mfem/_par)
 endforeach()
+
+# Post-process lininteg and bilininteg modules (similar to legacy setup.py)
+# First, create the modules if they exist in the interface list
+file(GLOB LININTEG_INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/lininteg.i")
+file(GLOB BILININTEG_INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/bilininteg.i") 
+
+if(LININTEG_INTERFACE)
+    get_filename_component(MODULE_NAME ${LININTEG_INTERFACE} NAME_WE)
+    
+    # Set C++ properties before creating the library
+    set_property(SOURCE ${LININTEG_INTERFACE} PROPERTY CPLUSPLUS ON)
+    
+    # Add SWIG include directories for this interface
+    set_property(SOURCE ${LININTEG_INTERFACE} PROPERTY SWIG_FLAGS 
+        "-I${SWIG_LIB_DIR}/python"
+        "-I${MFEM_SOURCE}"
+        "-I${MFEM_SOURCE}/build_par/install/include"
+        "-I${EXT_PREFIX}/include"
+        "-I${MPI4PY_INCLUDE_DIR}"
+    )
+    
+    swig_add_library(${MODULE_NAME}
+        TYPE MODULE
+        LANGUAGE python
+        SOURCES ${LININTEG_INTERFACE}
+    )
+    
+    # Set target properties
+    set_target_properties(${MODULE_NAME} PROPERTIES
+        OUTPUT_NAME "_${MODULE_NAME}"
+        PREFIX ""
+        SUFFIX ".${Python_SOABI}.so"
+        LINKER_LANGUAGE CXX
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+    )
+    
+    # Add preprocessor definitions
+    target_compile_definitions(${MODULE_NAME} PRIVATE
+        SWIG_TYPE_TABLE=PyMFEM
+        TARGET_PY3=1
+        NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+    )
+    
+    # Link libraries
+    target_link_libraries(${MODULE_NAME} 
+        Python::Module 
+        ${MPI_CXX_LIBRARIES}
+        ${MFEM_LIB}
+        ${HYPRE_LIB}
+        ${METIS_LIB}
+    )
+    
+    # Install the module and Python wrapper
+    install(TARGETS ${MODULE_NAME} LIBRARY DESTINATION mfem/_par)
+    install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.py DESTINATION mfem/_par)
+    
+    # Post-process lininteg extensions
+    add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/${MODULE_NAME}.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_par/${MODULE_NAME}.py
+        COMMAND ${Python_EXECUTABLE} generate_lininteg_ext.py
+        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_par/${MODULE_NAME}.py
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../common
+        COMMENT "Generating lininteg extensions for parallel"
+    )
+endif()
+
+if(BILININTEG_INTERFACE)
+    get_filename_component(MODULE_NAME ${BILININTEG_INTERFACE} NAME_WE)
+    
+    # Set C++ properties before creating the library
+    set_property(SOURCE ${BILININTEG_INTERFACE} PROPERTY CPLUSPLUS ON)
+    
+    # Add SWIG include directories for this interface
+    set_property(SOURCE ${BILININTEG_INTERFACE} PROPERTY SWIG_FLAGS 
+        "-I${SWIG_LIB_DIR}/python"
+        "-I${MFEM_SOURCE}"
+        "-I${MFEM_SOURCE}/build_par/install/include"
+        "-I${EXT_PREFIX}/include"
+        "-I${MPI4PY_INCLUDE_DIR}"
+    )
+    
+    swig_add_library(${MODULE_NAME}
+        TYPE MODULE
+        LANGUAGE python
+        SOURCES ${BILININTEG_INTERFACE}
+    )
+    
+    # Set target properties
+    set_target_properties(${MODULE_NAME} PROPERTIES
+        OUTPUT_NAME "_${MODULE_NAME}"
+        PREFIX ""
+        SUFFIX ".${Python_SOABI}.so"
+        LINKER_LANGUAGE CXX
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+    )
+    
+    # Add preprocessor definitions
+    target_compile_definitions(${MODULE_NAME} PRIVATE
+        SWIG_TYPE_TABLE=PyMFEM
+        TARGET_PY3=1
+        NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+    )
+    
+    # Link libraries
+    target_link_libraries(${MODULE_NAME} 
+        Python::Module 
+        ${MPI_CXX_LIBRARIES}
+        ${MFEM_LIB}
+        ${HYPRE_LIB}
+        ${METIS_LIB}
+    )
+    
+    # Install the module and Python wrapper
+    install(TARGETS ${MODULE_NAME} LIBRARY DESTINATION mfem/_par)
+    install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.py DESTINATION mfem/_par)
+    
+    # Post-process bilininteg extensions
+    add_custom_command(TARGET ${MODULE_NAME} POST_BUILD  
+        COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/${MODULE_NAME}.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_par/${MODULE_NAME}.py
+        COMMAND ${Python_EXECUTABLE} generate_bilininteg_ext.py
+        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_par/${MODULE_NAME}.py
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../common
+        COMMENT "Generating bilininteg extensions for parallel"
+    )
+endif()
 
 # Install Python files
 file(GLOB PYTHON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.py")

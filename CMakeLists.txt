@@ -19,6 +19,18 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Set parallel build level for make commands
+include(ProcessorCount)
+ProcessorCount(N)
+if(N EQUAL 0)
+    set(CMAKE_BUILD_PARALLEL_LEVEL 1)
+else()
+    math(EXPR CMAKE_BUILD_PARALLEL_LEVEL "${N} - 1")
+    if(CMAKE_BUILD_PARALLEL_LEVEL LESS 1)
+        set(CMAKE_BUILD_PARALLEL_LEVEL 1)
+    endif()
+endif()
+
 # Enable verbose output for debugging
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_MESSAGE_LOG_LEVEL TRACE)
@@ -67,6 +79,7 @@ set(CC_COMMAND "cc" CACHE STRING "C compiler command")
 set(CXX_COMMAND "c++" CACHE STRING "C++ compiler command") 
 set(MPICC_COMMAND "mpicc" CACHE STRING "MPI C compiler command")
 set(MPICXX_COMMAND "mpic++" CACHE STRING "MPI C++ compiler command")
+set(CUDA_ARCH "" CACHE STRING "CUDA compute capability")
 
 # Update from environment if set
 if(DEFINED ENV{CC})
@@ -80,6 +93,14 @@ if(DEFINED ENV{MPICC})
 endif()
 if(DEFINED ENV{MPICXX})
     set(MPICXX_COMMAND $ENV{MPICXX})
+endif()
+
+# Find MPI if building parallel
+if(BUILD_PARALLEL)
+    find_package(MPI REQUIRED)
+    if(NOT MPI_FOUND)
+        message(FATAL_ERROR "MPI not found but required for parallel build")
+    endif()
 endif()
 
 # Include directories
@@ -191,6 +212,150 @@ function(download_external_tarball name url)
     endif()
 endfunction()
 
+# Function to build METIS dependency
+function(build_metis)
+    set(metis_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/metis)
+    set(metis_build_dir ${metis_dir}/build)
+    set(metis_install_dir ${EXT_PREFIX})
+    
+    # Check if METIS is already built
+    if(EXISTS ${metis_install_dir}/lib/libmetis.a OR EXISTS ${metis_install_dir}/lib/libmetis.so OR EXISTS ${metis_install_dir}/lib/libmetis.dylib)
+        message(STATUS "METIS already built at ${metis_install_dir}")
+        return()
+    endif()
+    
+    message(STATUS "Building METIS at ${metis_dir}")
+    
+    if(NOT EXISTS ${metis_dir})
+        message(FATAL_ERROR "METIS source not found at ${metis_dir}")
+    endif()
+    
+    # Create build directory  
+    file(MAKE_DIRECTORY ${metis_build_dir})
+    
+    # Configure METIS build (matching setup_legacy.py configuration)
+    execute_process(
+        COMMAND make config shared=1 prefix=${metis_install_dir} cc=${CC_COMMAND}
+        WORKING_DIRECTORY ${metis_dir}
+        RESULT_VARIABLE config_result
+    )
+    
+    if(NOT config_result EQUAL "0")
+        message(FATAL_ERROR "Failed to configure METIS")
+    endif()
+    
+    # Build METIS
+    execute_process(
+        COMMAND make -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        WORKING_DIRECTORY ${metis_dir}
+        RESULT_VARIABLE build_result
+    )
+    
+    if(NOT build_result EQUAL "0")
+        message(FATAL_ERROR "Failed to build METIS")
+    endif()
+    
+    # Install METIS
+    execute_process(
+        COMMAND make install
+        WORKING_DIRECTORY ${metis_dir}
+        RESULT_VARIABLE install_result
+    )
+    
+    if(install_result EQUAL "0")
+        message(STATUS "Successfully built and installed METIS")
+        # Fix library install names on macOS
+        if(APPLE)
+            execute_process(
+                COMMAND install_name_tool -id ${metis_install_dir}/lib/libmetis.dylib ${metis_install_dir}/lib/libmetis.dylib
+                RESULT_VARIABLE fix_result
+            )
+        endif()
+    else()
+        message(FATAL_ERROR "Failed to install METIS")
+    endif()
+endfunction()
+
+# Function to build HYPRE dependency  
+function(build_hypre)
+    set(hypre_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/hypre)
+    set(hypre_build_dir ${hypre_dir}/src/cmbuild)
+    set(hypre_install_dir ${EXT_PREFIX})
+    
+    # Check if HYPRE is already built
+    if(EXISTS ${hypre_install_dir}/lib/libHYPRE.a OR EXISTS ${hypre_install_dir}/lib/libHYPRE.so OR EXISTS ${hypre_install_dir}/lib/libHYPRE.dylib)
+        message(STATUS "HYPRE already built at ${hypre_install_dir}")
+        return()
+    endif()
+    
+    message(STATUS "Building HYPRE at ${hypre_dir}")
+    
+    if(NOT EXISTS ${hypre_dir})
+        message(FATAL_ERROR "HYPRE source not found at ${hypre_dir}")
+    endif()
+    
+    # Create build directory
+    file(MAKE_DIRECTORY ${hypre_build_dir})
+    
+    # Configure HYPRE with CMake (matching setup_legacy.py configuration)
+    set(HYPRE_CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=Release
+        -DBUILD_SHARED_LIBS=ON
+        -DHYPRE_INSTALL_PREFIX=${hypre_install_dir}
+        -DHYPRE_ENABLE_SHARED=ON
+        -DCMAKE_C_FLAGS=-fPIC
+        -DCMAKE_INSTALL_PREFIX=${hypre_install_dir}
+        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+    )
+    
+    if(APPLE)
+        list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_INSTALL_NAME_DIR=${hypre_install_dir}/lib)
+    endif()
+    
+    if(ENABLE_CUDA)
+        list(APPEND HYPRE_CMAKE_ARGS -DHYPRE_WITH_CUDA=ON)
+        if(CUDA_ARCH)
+            list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH})
+        endif()
+    else()
+        list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_C_COMPILER=${MPICC_COMMAND})
+    endif()
+    
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} ${HYPRE_CMAKE_ARGS} ..
+        WORKING_DIRECTORY ${hypre_build_dir}
+        RESULT_VARIABLE config_result
+    )
+    
+    if(NOT config_result EQUAL "0")
+        message(FATAL_ERROR "Failed to configure HYPRE")
+    endif()
+    
+    # Build HYPRE
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} --build . --parallel
+        WORKING_DIRECTORY ${hypre_build_dir}
+        RESULT_VARIABLE build_result
+    )
+    
+    if(NOT build_result EQUAL "0")
+        message(FATAL_ERROR "Failed to build HYPRE")
+    endif()
+    
+    # Install HYPRE
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} --build . --target install
+        WORKING_DIRECTORY ${hypre_build_dir}
+        RESULT_VARIABLE install_result
+    )
+    
+    if(install_result EQUAL "0")
+        message(STATUS "Successfully built and installed HYPRE")
+    else()
+        message(FATAL_ERROR "Failed to install HYPRE")
+    endif()
+endfunction()
+
 # Function to build MFEM using CMake
 function(build_mfem)
     set(mfem_build_dir ${MFEM_SOURCE}/build)
@@ -259,17 +424,96 @@ function(build_mfem)
     endif()
 endfunction()
 
-# Download and build MFEM (always needed)
-download_mfem()
-build_mfem()
+# Function to build parallel MFEM using CMake
+function(build_mfem_parallel)
+    set(mfem_build_dir ${MFEM_SOURCE}/build_par)
+    
+    # Check if parallel MFEM is already built
+    if(EXISTS ${mfem_build_dir}/libmfem.a OR EXISTS ${mfem_build_dir}/libmfem.so)
+        message(STATUS "Parallel MFEM already built at ${mfem_build_dir}")
+        return()
+    endif()
+    
+    message(STATUS "Building parallel MFEM at ${MFEM_SOURCE}")
+    
+    # Create build directory
+    file(MAKE_DIRECTORY ${mfem_build_dir})
+    
+    # Configure parallel MFEM with CMake (matching legacy setup.py configuration)
+    set(MFEM_PAR_CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=Release
+        -DBUILD_SHARED_LIBS=ON
+        -DMFEM_ENABLE_EXAMPLES=ON
+        -DMFEM_ENABLE_MINIAPPS=ON
+        -DMFEM_USE_ZLIB=ON
+        -DMFEM_USE_MPI=ON
+        -DMFEM_USE_EXCEPTIONS=OFF
+        -DMFEM_THREAD_SAFE=ON
+        -DMFEM_USE_OPENMP=OFF
+        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
+        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+        -DCMAKE_CXX_COMPILER=${MPICXX_COMMAND}
+        -DCMAKE_INSTALL_PREFIX=${mfem_build_dir}/install
+        -DHYPRE_DIR=${EXT_PREFIX}
+        -DHYPRE_INCLUDE_DIRS=${EXT_PREFIX}/include
+        -DMFEM_USE_METIS_5=ON
+        -DMETIS_DIR=${EXT_PREFIX}
+        -DMETIS_INCLUDE_DIRS=${EXT_PREFIX}/include
+    )
+    
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} ${MFEM_PAR_CMAKE_ARGS} ${MFEM_SOURCE}
+        WORKING_DIRECTORY ${mfem_build_dir}
+        RESULT_VARIABLE config_result
+    )
+    
+    if(NOT config_result EQUAL "0")
+        message(FATAL_ERROR "Failed to configure parallel MFEM")
+    endif()
+    
+    # Build parallel MFEM
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} --build . --parallel
+        WORKING_DIRECTORY ${mfem_build_dir}
+        RESULT_VARIABLE build_result
+    )
+    
+    if(NOT build_result EQUAL "0")
+        message(FATAL_ERROR "Failed to build parallel MFEM")
+    endif()
+    
+    # Install parallel MFEM
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} --build . --target install
+        WORKING_DIRECTORY ${mfem_build_dir}
+        RESULT_VARIABLE install_result
+    )
+    
+    if(install_result EQUAL "0")
+        message(STATUS "Successfully built and installed parallel MFEM")
+        # Copy data for testing (matching setup_legacy.py behavior)
+        if(EXISTS ${MFEM_SOURCE}/data)
+            execute_process(
+                COMMAND ${CMAKE_COMMAND} -E copy_directory ${MFEM_SOURCE}/data ${mfem_build_dir}/install/data
+            )
+        endif()
+        set(MFEM_PAR_BUILD_INSTALL_DIR ${mfem_build_dir}/install PARENT_SCOPE)
+    else()
+        message(FATAL_ERROR "Failed to install parallel MFEM")
+    endif()
+endfunction()
 
-# Download other external dependencies based on options
-if(BUILD_HYPRE)
-    download_external_tarball(hypre ${HYPRE_URL})
+# Download and build dependencies in order based on options
+if(BUILD_PARALLEL OR BUILD_METIS)
+    download_external_tarball(metis ${METIS_URL})
+    build_metis()
 endif()
 
-if(BUILD_METIS)  
-    download_external_tarball(metis ${METIS_URL})
+if(BUILD_PARALLEL OR BUILD_HYPRE)
+    download_external_tarball(hypre ${HYPRE_URL})  
+    build_hypre()
 endif()
 
 if(BUILD_LIBCEED)
@@ -278,6 +522,15 @@ endif()
 
 if(BUILD_GSLIB)
     download_external_tarball(gslib ${GSLIB_URL})
+endif()
+
+# Download and build MFEM (always needed - serial first)
+download_mfem()
+build_mfem()
+
+# Build parallel MFEM if requested
+if(BUILD_PARALLEL)
+    build_mfem_parallel()
 endif()
 
 # Generate header defines now that MFEM source should exist
