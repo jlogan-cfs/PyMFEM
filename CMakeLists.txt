@@ -449,6 +449,15 @@ function(build_mfem_parallel)
     file(MAKE_DIRECTORY ${mfem_build_dir})
     
     # Configure parallel MFEM with CMake (matching legacy setup.py configuration)
+    # Set library extensions based on platform
+    if(APPLE)
+        set(HYPRE_LIB_PATH "${EXT_PREFIX}/lib/libHYPRE.dylib")
+        set(METIS_LIB_PATH "${EXT_PREFIX}/lib/libmetis.dylib")
+    else()
+        set(HYPRE_LIB_PATH "${EXT_PREFIX}/lib/libHYPRE.so")
+        set(METIS_LIB_PATH "${EXT_PREFIX}/lib/libmetis.so")
+    endif()
+    
     set(MFEM_PAR_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=Release
         -DBUILD_SHARED_LIBS=ON
@@ -467,9 +476,11 @@ function(build_mfem_parallel)
         -DCMAKE_INSTALL_PREFIX=${mfem_build_dir}/install
         -DHYPRE_DIR=${EXT_PREFIX}
         -DHYPRE_INCLUDE_DIRS=${EXT_PREFIX}/include
+        -DHYPRE_LIBRARIES=${HYPRE_LIB_PATH}
         -DMFEM_USE_METIS_5=ON
         -DMETIS_DIR=${EXT_PREFIX}
         -DMETIS_INCLUDE_DIRS=${CMAKE_CURRENT_SOURCE_DIR}/external/metis/include
+        -DMETIS_LIBRARIES=${METIS_LIB_PATH}
     )
     
     execute_process(
