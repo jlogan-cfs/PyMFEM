@@ -202,11 +202,9 @@ function(download_external_tarball name url)
             SOURCE_DIR ${external_dir}
         )
         
-        FetchContent_GetProperties(${name})
-        if(NOT ${name}_POPULATED)
-            FetchContent_Populate(${name})
-            message(STATUS "Successfully downloaded ${name} to ${external_dir}")
-        endif()
+        # Use MakeAvailable instead of Populate to avoid deprecation warning
+        FetchContent_MakeAvailable(${name})
+        message(STATUS "Successfully downloaded ${name} to ${external_dir}")
     else()
         message(STATUS "${name} found at ${external_dir}")
     endif()
@@ -232,6 +230,15 @@ function(build_metis)
     
     # Create build directory  
     file(MAKE_DIRECTORY ${metis_build_dir})
+    
+    # Patch METIS CMakeLists.txt before config to avoid policy error
+    if(EXISTS ${metis_dir}/CMakeLists.txt)
+        execute_process(
+            COMMAND sed -i.bak "1s/.*/cmake_minimum_required(VERSION 4.0)/" CMakeLists.txt
+            WORKING_DIRECTORY ${metis_dir}
+            RESULT_VARIABLE patch_result
+        )
+    endif()
     
     # Configure METIS build (matching setup_legacy.py configuration)
     execute_process(
