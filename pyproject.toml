@@ -110,7 +110,7 @@ ENABLE_LAPACK = {env = "PYMFEM_ENABLE_LAPACK", default = "OFF"}
 
 # Path configurations
 MFEM_SOURCE = {env = "PYMFEM_MFEM_SOURCE", default = "./external/mfem"}
-EXT_PREFIX = {env = "PYMFEM_EXT_PREFIX", default = ""}
+EXT_PREFIX = {env = "PYMFEM_EXT_PREFIX", default = "external/install"}
 
 # Compiler configurations
 CC_COMMAND = {env = "CC", default = "cc"}

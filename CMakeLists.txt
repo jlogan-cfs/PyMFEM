@@ -231,18 +231,9 @@ function(build_metis)
     # Create build directory  
     file(MAKE_DIRECTORY ${metis_build_dir})
     
-    # Patch METIS CMakeLists.txt before config to avoid policy error
-    if(EXISTS ${metis_dir}/CMakeLists.txt)
-        execute_process(
-            COMMAND sed -i.bak "1s/.*/cmake_minimum_required(VERSION 4.0)/" CMakeLists.txt
-            WORKING_DIRECTORY ${metis_dir}
-            RESULT_VARIABLE patch_result
-        )
-    endif()
-    
     # Configure METIS build (matching setup_legacy.py configuration)
     execute_process(
-        COMMAND make config shared=1 prefix=${metis_install_dir} cc=${CC_COMMAND}
+        COMMAND make config shared=1 prefix=${metis_install_dir} cc=${CC_COMMAND} CMAKE_POLICY_VERSION_MINIMUM=4.0
         WORKING_DIRECTORY ${metis_dir}
         RESULT_VARIABLE config_result
     )
