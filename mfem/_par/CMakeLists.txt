@@ -81,6 +81,11 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
         continue()
     endif()
     
+    # Skip schwarz if SuiteSparse is not enabled (schwarz requires UMFPackSolver)
+    if(MODULE_NAME STREQUAL "schwarz" AND NOT ENABLE_SUITESPARSE)
+        continue()
+    endif()
+    
     # Set C++ properties before creating the library
     set_property(SOURCE ${SWIG_INTERFACE} PROPERTY CPLUSPLUS ON)
     
