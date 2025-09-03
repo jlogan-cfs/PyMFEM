@@ -86,6 +86,16 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
         continue()
     endif()
     
+    # Skip pumi if not enabled (pumi requires PUMI library)
+    if(MODULE_NAME STREQUAL "pumi" AND NOT ENABLE_PUMI)
+        continue()
+    endif()
+    
+    # Skip gslib if not enabled (gslib requires GSLib library)
+    if(MODULE_NAME STREQUAL "gslib" AND NOT BUILD_GSLIB)
+        continue()
+    endif()
+    
     # Set C++ properties before creating the library
     set_property(SOURCE ${SWIG_INTERFACE} PROPERTY CPLUSPLUS ON)
     
