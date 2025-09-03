@@ -11,8 +11,8 @@ find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(SWIG REQUIRED)
 include(UseSWIG)
 
-# Include FetchContent for downloading external dependencies
-include(FetchContent)
+# CMake utilities for downloading dependencies
+# (Using direct file operations instead of FetchContent to avoid CMake configuration issues)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 11)
@@ -206,15 +206,41 @@ function(download_external_tarball name url)
         
         file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external)
         
-        # Download and extract using FetchContent
-        FetchContent_Declare(
-            ${name}
-            URL ${url}
-            SOURCE_DIR ${external_dir}
+        # Download tarball directly
+        get_filename_component(tarball_name ${url} NAME)
+        set(tarball_path ${CMAKE_CURRENT_SOURCE_DIR}/external/${tarball_name})
+        
+        file(DOWNLOAD ${url} ${tarball_path}
+             SHOW_PROGRESS
+             STATUS download_status
         )
         
-        # Use MakeAvailable instead of Populate to avoid deprecation warning
-        FetchContent_MakeAvailable(${name})
+        list(GET download_status 0 download_result)
+        if(NOT download_result EQUAL 0)
+            message(FATAL_ERROR "Failed to download ${name} from ${url}")
+        endif()
+        
+        # Extract tarball
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} -E tar xzf ${tarball_path}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external
+            RESULT_VARIABLE extract_result
+        )
+        
+        if(NOT extract_result EQUAL 0)
+            message(FATAL_ERROR "Failed to extract ${tarball_name}")
+        endif()
+        
+        # Rename extracted directory to expected name (remove version suffix)
+        file(GLOB extracted_dirs "${CMAKE_CURRENT_SOURCE_DIR}/external/${name}-*")
+        if(extracted_dirs)
+            list(GET extracted_dirs 0 extracted_dir)
+            file(RENAME ${extracted_dir} ${external_dir})
+        endif()
+        
+        # Clean up tarball
+        file(REMOVE ${tarball_path})
+        
         message(STATUS "Successfully downloaded ${name} to ${external_dir}")
     else()
         message(STATUS "${name} found at ${external_dir}")
@@ -226,6 +252,7 @@ function(build_metis)
     set(metis_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/metis)
     set(metis_build_dir ${metis_dir}/build)
     set(metis_install_dir ${EXT_PREFIX})
+    message(STATUS "Placing metis library file in ${metis_install_dir}/lib/")
     
     # Check if METIS is already built
     if(EXISTS ${metis_install_dir}/lib/libmetis.a OR EXISTS ${metis_install_dir}/lib/libmetis.so OR EXISTS ${metis_install_dir}/lib/libmetis.dylib)
@@ -298,6 +325,7 @@ function(build_hypre)
     endif()
     
     message(STATUS "Building HYPRE at ${hypre_dir}")
+    message(STATUS "Installing HYPRE at ${hypre_install_dir}")
     
     if(NOT EXISTS ${hypre_dir})
         message(FATAL_ERROR "HYPRE source not found at ${hypre_dir}")
@@ -363,6 +391,8 @@ function(build_hypre)
     else()
         message(FATAL_ERROR "Failed to install HYPRE")
     endif()
+
+    message(STATUS "Built HYPRE")
 endfunction()
 
 # Function to build MFEM using CMake
@@ -444,6 +474,7 @@ function(build_mfem_parallel)
     endif()
     
     message(STATUS "Building parallel MFEM at ${MFEM_SOURCE}")
+    message(STATUS "Looking for MFEM lib deps at ${EXT_PREFIX}/lib")
     
     # Create build directory
     file(MAKE_DIRECTORY ${mfem_build_dir})
