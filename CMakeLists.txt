@@ -81,6 +81,18 @@ if(NOT IS_ABSOLUTE ${EXT_PREFIX})
     get_filename_component(EXT_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/${EXT_PREFIX}" ABSOLUTE)
 endif()
 
+# Find mpi4py include directory if we're doing a parallel build.
+# This has to be done in the top level directory to find the uv venv correctly.
+if(BUILD_PARALLEL)
+    # Find mpi4py include directory
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -c "import mpi4py; print(mpi4py.get_include())"
+        OUTPUT_VARIABLE MPI4PY_INCLUDE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    message(STATUS "PYMFEM: MPI4PY_INCLUDE_DIR = ${MPI4PY_INCLUDE_DIR}")
+endif()
+
 set(MFEM_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/external/mfem CACHE PATH "MFEM source directory")
 
 message(STATUS "PyMFEM: EXT_PREFIX = ${EXT_PREFIX} (absolute)")
