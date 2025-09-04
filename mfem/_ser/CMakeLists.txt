@@ -143,9 +143,16 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     endforeach()
     
     # Link against Python and MFEM shared library
+    # Platform-specific library extensions
+    if(APPLE)
+        set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.dylib")
+    else()
+        set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.so")
+    endif()
+    
     target_link_libraries(${MODULE_NAME} 
         Python::Module
-        ${MFEM_SOURCE}/build/install/lib/libmfem.dylib
+        ${MFEM_LIB}
     )
     
     # Install the compiled module
