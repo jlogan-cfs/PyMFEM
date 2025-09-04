@@ -289,9 +289,15 @@ function(build_metis)
     # Configure METIS build (matching setup_legacy.py configuration)
     # Force cmake to use Unix Makefiles generator (not Ninja) since METIS expects Makefile
     set(ENV{CMAKE_GENERATOR} "Unix Makefiles")
-    message(STATUS "Configuring METIS with: make config shared=1 prefix=${metis_install_dir} cc=$CC CMAKE_POLICY_VERSION_MINIMUM=4.0")
+    # Extract base compiler command without flags for METIS config
+    string(REGEX REPLACE " .*" "" BASE_CC_COMMAND "${CC_COMMAND}")
+    if(NOT BASE_CC_COMMAND)
+        set(BASE_CC_COMMAND "${CC_COMMAND}")
+    endif()
+    
+    message(STATUS "Configuring METIS with: make config shared=1 prefix=${metis_install_dir} cc=${BASE_CC_COMMAND} CMAKE_POLICY_VERSION_MINIMUM=4.0")
     execute_process(
-        COMMAND make config shared=1 prefix=${metis_install_dir} cc=$ENV{CC} CMAKE_POLICY_VERSION_MINIMUM=4.0
+        COMMAND make config shared=1 prefix=${metis_install_dir} cc=${BASE_CC_COMMAND} CMAKE_POLICY_VERSION_MINIMUM=4.0
         WORKING_DIRECTORY ${metis_dir}
         RESULT_VARIABLE config_result
         OUTPUT_VARIABLE config_output
