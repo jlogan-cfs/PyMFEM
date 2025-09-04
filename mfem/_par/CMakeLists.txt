@@ -330,7 +330,10 @@ endif()
 
 # Install the libraries to a .dylibs subdirectory (following numpy/scipy pattern)
 # Note: We use .dylibs for both macOS and Linux for consistency
-install(FILES ${MFEM_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)
+install(DIRECTORY "${MFEM_SOURCE}/build_par/install/lib/"
+        DESTINATION mfem/.dylibs
+        FILES_MATCHING PATTERN "libmfem.*"
+        PATTERN "cmake" EXCLUDE)
 install(FILES ${HYPRE_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)  
 install(FILES ${METIS_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)
 
