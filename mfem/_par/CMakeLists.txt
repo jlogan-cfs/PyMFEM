@@ -329,11 +329,12 @@ else()
 endif()
 
 # Install the libraries to a .dylibs subdirectory (following numpy/scipy pattern)
+# Note: We use .dylibs for both macOS and Linux for consistency
 install(FILES ${MFEM_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)
 install(FILES ${HYPRE_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)  
 install(FILES ${METIS_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)
 
-# Fix RPATHs on macOS for all installed shared libraries
+# Fix RPATHs for all installed shared libraries
 if(APPLE)
     # Fix RPATH for all .so files to look in the .dylibs directory
     install(CODE "
@@ -343,6 +344,14 @@ if(APPLE)
             execute_process(COMMAND install_name_tool -change ${MFEM_LIB_INSTALL} @rpath/libmfem.dylib \${LIB})
             execute_process(COMMAND install_name_tool -change ${HYPRE_LIB_INSTALL} @rpath/libHYPRE.dylib \${LIB})
             execute_process(COMMAND install_name_tool -change ${METIS_LIB_INSTALL} @rpath/libmetis.dylib \${LIB})
+        endforeach()
+    ")
+elseif(UNIX)
+    # Use chrpath on Linux to set RPATH to look in the .dylibs directory
+    install(CODE "
+        file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_par/*.so\")
+        foreach(LIB \${SHARED_LIBS})
+            execute_process(COMMAND chrpath -r \\\$ORIGIN/../.dylibs \${LIB})
         endforeach()
     ")
 endif()
