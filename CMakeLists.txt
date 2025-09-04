@@ -598,6 +598,15 @@ function(build_mfem_parallel)
         -DMETIS_LIBRARIES=${METIS_LIB_PATH}
     )
     
+    # Add RPATH configuration for Linux so MFEM can find HYPRE and METIS
+    if(UNIX AND NOT APPLE)
+        list(APPEND MFEM_PAR_CMAKE_ARGS 
+            -DCMAKE_BUILD_RPATH_USE_ORIGIN=ON
+            -DCMAKE_INSTALL_RPATH="\$ORIGIN"
+            -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+        )
+    endif()
+    
     execute_process(
         COMMAND ${CMAKE_COMMAND} ${MFEM_PAR_CMAKE_ARGS} ${MFEM_SOURCE}
         WORKING_DIRECTORY ${mfem_build_dir}
