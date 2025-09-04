@@ -170,6 +170,15 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
         ${METIS_LIB}
     )
     
+    # Set RPATH for Linux to find libraries in .dylibs directory
+    if(UNIX AND NOT APPLE)
+        set_target_properties(${MODULE_NAME}_par PROPERTIES
+            BUILD_RPATH_USE_ORIGIN ON
+            INSTALL_RPATH "$ORIGIN/../.dylibs"
+            BUILD_WITH_INSTALL_RPATH ON
+        )
+    endif()
+    
     # Install the module
     # Install the compiled module
     install(TARGETS ${MODULE_NAME}_par 
@@ -233,6 +242,15 @@ if(LININTEG_INTERFACE)
         ${HYPRE_LIB}
         ${METIS_LIB}
     )
+    
+    # Set RPATH for Linux to find libraries in .dylibs directory
+    if(UNIX AND NOT APPLE)
+        set_target_properties(${MODULE_NAME}_par PROPERTIES
+            BUILD_RPATH_USE_ORIGIN ON
+            INSTALL_RPATH "$ORIGIN/../.dylibs"
+            BUILD_WITH_INSTALL_RPATH ON
+        )
+    endif()
     
     # Install the module and Python wrapper
     install(TARGETS ${MODULE_NAME}_par LIBRARY DESTINATION mfem/_par)
@@ -298,6 +316,15 @@ if(BILININTEG_INTERFACE)
         ${METIS_LIB}
     )
     
+    # Set RPATH for Linux to find libraries in .dylibs directory
+    if(UNIX AND NOT APPLE)
+        set_target_properties(${MODULE_NAME}_par PROPERTIES
+            BUILD_RPATH_USE_ORIGIN ON
+            INSTALL_RPATH "$ORIGIN/../.dylibs"
+            BUILD_WITH_INSTALL_RPATH ON
+        )
+    endif()
+    
     # Install the module and Python wrapper
     install(TARGETS ${MODULE_NAME}_par LIBRARY DESTINATION mfem/_par)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/swig_par/${MODULE_NAME}.py DESTINATION mfem/_par)
@@ -350,11 +377,5 @@ if(APPLE)
         endforeach()
     ")
 elseif(UNIX)
-    # Use patchelf on Linux to set RPATH to look in the .dylibs directory
-    install(CODE "
-        file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_par/*.so\")
-        foreach(LIB \${SHARED_LIBS})
-            execute_process(COMMAND patchelf --set-rpath \\\$ORIGIN/../.dylibs \${LIB})
-        endforeach()
-    ")
+    # RPATH is now set at build time, no post-processing needed
 endif()
