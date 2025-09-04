@@ -350,11 +350,11 @@ if(APPLE)
         endforeach()
     ")
 elseif(UNIX)
-    # Use chrpath on Linux to set RPATH to look in the .dylibs directory
+    # Use patchelf on Linux to set RPATH to look in the .dylibs directory
     install(CODE "
         file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_par/*.so\")
         foreach(LIB \${SHARED_LIBS})
-            execute_process(COMMAND chrpath -r \\\$ORIGIN/../.dylibs \${LIB})
+            execute_process(COMMAND patchelf --set-rpath \\\$ORIGIN/../.dylibs \${LIB})
         endforeach()
     ")
 endif()
