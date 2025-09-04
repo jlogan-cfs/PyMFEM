@@ -316,3 +316,33 @@ endif()
 # Install Python files
 file(GLOB PYTHON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.py")
 install(FILES ${PYTHON_FILES} DESTINATION mfem/_par)
+
+# Install required dynamic libraries for wheel distribution
+if(APPLE)
+    set(MFEM_LIB_INSTALL "${MFEM_SOURCE}/build_par/install/lib/libmfem.dylib")
+    set(HYPRE_LIB_INSTALL "${EXT_PREFIX}/lib/libHYPRE.dylib") 
+    set(METIS_LIB_INSTALL "${EXT_PREFIX}/lib/libmetis.dylib")
+else()
+    set(MFEM_LIB_INSTALL "${MFEM_SOURCE}/build_par/install/lib/libmfem.so")
+    set(HYPRE_LIB_INSTALL "${EXT_PREFIX}/lib/libHYPRE.so")
+    set(METIS_LIB_INSTALL "${EXT_PREFIX}/lib/libmetis.so")
+endif()
+
+# Install the libraries to a .dylibs subdirectory (following numpy/scipy pattern)
+install(FILES ${MFEM_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)
+install(FILES ${HYPRE_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)  
+install(FILES ${METIS_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)
+
+# Fix RPATHs on macOS for all installed shared libraries
+if(APPLE)
+    # Fix RPATH for all .so files to look in the .dylibs directory
+    install(CODE "
+        file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_par/*.so\")
+        foreach(LIB \${SHARED_LIBS})
+            execute_process(COMMAND install_name_tool -add_rpath @loader_path/../.dylibs \${LIB})
+            execute_process(COMMAND install_name_tool -change ${MFEM_LIB_INSTALL} @rpath/libmfem.dylib \${LIB})
+            execute_process(COMMAND install_name_tool -change ${HYPRE_LIB_INSTALL} @rpath/libHYPRE.dylib \${LIB})
+            execute_process(COMMAND install_name_tool -change ${METIS_LIB_INSTALL} @rpath/libmetis.dylib \${LIB})
+        endforeach()
+    ")
+endif()
