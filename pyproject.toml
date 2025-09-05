@@ -36,7 +36,7 @@ dependencies = [
     "numpy >= 1.20.0, < 2.0.0",
     "numba",
     "numba-scipy",
-    "scipy",
+    "scipy >= 1.16.1",
     "swig",
     "mpi4py",
     "pip",
