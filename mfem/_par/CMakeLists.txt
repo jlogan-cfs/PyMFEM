@@ -377,5 +377,12 @@ if(APPLE)
         endforeach()
     ")
 elseif(UNIX)
-    # RPATH is now set at build time, no post-processing needed
+    # Fix RPATH for libmfem in .dylibs directory on Linux
+    install(CODE "
+        file(GLOB MFEM_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/.dylibs/libmfem.so*\")
+        foreach(MFEM_LIB \${MFEM_LIBS})
+            execute_process(COMMAND patchelf --remove-rpath \${MFEM_LIB} ERROR_QUIET)
+            execute_process(COMMAND patchelf --set-rpath \\\$ORIGIN \${MFEM_LIB} ERROR_QUIET)
+        endforeach()
+    ")
 endif()
