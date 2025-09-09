@@ -195,7 +195,7 @@ add_custom_command(TARGET bilininteg POST_BUILD
 file(GLOB PYTHON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.py")
 install(FILES ${PYTHON_FILES} DESTINATION mfem/_ser)
 
-# Fix RPATHs for all installed shared libraries on macOS
+# Fix RPATHs for all installed shared libraries
 if(APPLE)
     # Fix RPATH for all .so files to look in the .dylibs directory
     install(CODE "
@@ -203,6 +203,20 @@ if(APPLE)
         foreach(LIB \${SHARED_LIBS})
             execute_process(COMMAND install_name_tool -add_rpath @loader_path/../.dylibs \${LIB})
             execute_process(COMMAND install_name_tool -change ${MFEM_SOURCE}/build/install/lib/libmfem.dylib @rpath/libmfem.dylib \${LIB})
+        endforeach()
+        # Fix RPATH for libmfem in .dylibs directory to find dependencies in same directory
+        file(GLOB MFEM_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/.dylibs/libmfem.*\")
+        foreach(MFEM_LIB \${MFEM_LIBS})
+            execute_process(COMMAND install_name_tool -delete_rpath ${MFEM_SOURCE}/build/install/lib \${MFEM_LIB} ERROR_QUIET)
+            execute_process(COMMAND install_name_tool -add_rpath @loader_path \${MFEM_LIB})
+        endforeach()
+    ")
+else()
+    # Fix RPATH for libmfem in .dylibs directory on Linux
+    install(CODE "
+        file(GLOB MFEM_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/.dylibs/libmfem.so*\")
+        foreach(MFEM_LIB \${MFEM_LIBS})
+            execute_process(COMMAND patchelf --set-rpath \"\$ORIGIN\" \${MFEM_LIB} ERROR_QUIET)
         endforeach()
     ")
 endif()
