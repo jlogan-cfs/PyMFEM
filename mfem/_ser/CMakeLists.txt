@@ -155,6 +155,15 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
         ${MFEM_LIB}
     )
     
+    # Set RPATH for Linux to find libraries in .dylibs directory
+    if(UNIX AND NOT APPLE)
+        set_target_properties(${MODULE_NAME} PROPERTIES
+            BUILD_RPATH_USE_ORIGIN ON
+            INSTALL_RPATH "$ORIGIN/../.dylibs"
+            BUILD_WITH_INSTALL_RPATH ON
+        )
+    endif()
+    
     # Install the compiled module
     install(TARGETS ${MODULE_NAME} 
             LIBRARY DESTINATION mfem/_ser)
@@ -185,3 +194,15 @@ add_custom_command(TARGET bilininteg POST_BUILD
 # Install Python files
 file(GLOB PYTHON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.py")
 install(FILES ${PYTHON_FILES} DESTINATION mfem/_ser)
+
+# Fix RPATHs for all installed shared libraries on macOS
+if(APPLE)
+    # Fix RPATH for all .so files to look in the .dylibs directory
+    install(CODE "
+        file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_ser/*.so\")
+        foreach(LIB \${SHARED_LIBS})
+            execute_process(COMMAND install_name_tool -add_rpath @loader_path/../.dylibs \${LIB})
+            execute_process(COMMAND install_name_tool -change ${MFEM_SOURCE}/build/install/lib/libmfem.dylib @rpath/libmfem.dylib \${LIB})
+        endforeach()
+    ")
+endif()
