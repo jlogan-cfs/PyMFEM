@@ -195,11 +195,14 @@ add_custom_command(TARGET bilininteg POST_BUILD
 file(GLOB PYTHON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.py")
 install(FILES ${PYTHON_FILES} DESTINATION mfem/_ser)
 
-# Install the MFEM library to .dylibs subdirectory
-install(DIRECTORY "${MFEM_SOURCE}/build/install/lib/"
-        DESTINATION mfem/.dylibs
-        FILES_MATCHING PATTERN "libmfem.*"
-        PATTERN "cmake" EXCLUDE)
+# Install the serial MFEM library to .dylibs subdirectory
+# Only install if we're building serial only (not parallel)
+if(NOT BUILD_PARALLEL)
+    install(DIRECTORY "${MFEM_SOURCE}/build/install/lib/"
+            DESTINATION mfem/.dylibs
+            FILES_MATCHING PATTERN "libmfem.*"
+            PATTERN "cmake" EXCLUDE)
+endif()
 
 # Install HYPRE and METIS libraries if they exist (needed for serial build too)
 if(APPLE)
