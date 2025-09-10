@@ -195,34 +195,34 @@ add_custom_command(TARGET bilininteg POST_BUILD
 file(GLOB PYTHON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.py")
 install(FILES ${PYTHON_FILES} DESTINATION mfem/_ser)
 
-# Fix RPATHs for all installed shared libraries
+# Install the MFEM library to .dylibs subdirectory
+install(DIRECTORY "${MFEM_SOURCE}/build/install/lib/"
+        DESTINATION mfem/.dylibs
+        FILES_MATCHING PATTERN "libmfem.*"
+        PATTERN "cmake" EXCLUDE)
+
+# Install HYPRE and METIS libraries if they exist (needed for serial build too)
 if(APPLE)
-    # Fix RPATH for all .so files to look in the .dylibs directory
+    set(HYPRE_LIB_INSTALL "${EXT_PREFIX}/lib/libHYPRE.dylib")
+    set(METIS_LIB_INSTALL "${EXT_PREFIX}/lib/libmetis.dylib")
+else()
+    set(HYPRE_LIB_INSTALL "${EXT_PREFIX}/lib/libHYPRE.so")
+    set(METIS_LIB_INSTALL "${EXT_PREFIX}/lib/libmetis.so")
+endif()
+
+install(FILES ${HYPRE_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)  
+install(FILES ${METIS_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)
+
+# Fix RPATHs for Python extension modules to find libraries in .dylibs
+if(APPLE)
     install(CODE "
         file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_ser/*.so\")
         foreach(LIB \${SHARED_LIBS})
             execute_process(COMMAND install_name_tool -add_rpath @loader_path/../.dylibs \${LIB})
             execute_process(COMMAND install_name_tool -change ${MFEM_SOURCE}/build/install/lib/libmfem.dylib @rpath/libmfem.dylib \${LIB})
         endforeach()
-        # Fix RPATH for libmfem in .dylibs directory to find dependencies in same directory
-        file(GLOB MFEM_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/.dylibs/libmfem.*\")
-        foreach(MFEM_LIB \${MFEM_LIBS})
-            # Remove all existing RPATHs (there could be multiple)
-            execute_process(COMMAND install_name_tool -delete_rpath ${MFEM_SOURCE}/build/install/lib \${MFEM_LIB} ERROR_QUIET)
-            execute_process(COMMAND install_name_tool -delete_rpath ${MFEM_SOURCE}/build_par/install/lib \${MFEM_LIB} ERROR_QUIET)
-            # Add new RPATH to same directory
-            execute_process(COMMAND install_name_tool -add_rpath @loader_path \${MFEM_LIB})
-            # Change dependency paths to use @rpath
-            execute_process(COMMAND install_name_tool -change libHYPRE.dylib @rpath/libHYPRE.dylib \${MFEM_LIB} ERROR_QUIET)
-            execute_process(COMMAND install_name_tool -change libmetis.dylib @rpath/libmetis.dylib \${MFEM_LIB} ERROR_QUIET)
-        endforeach()
-    ")
-else()
-    # Fix RPATH for libmfem in .dylibs directory on Linux
-    install(CODE "
-        file(GLOB MFEM_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/.dylibs/libmfem.so*\")
-        foreach(MFEM_LIB \${MFEM_LIBS})
-            execute_process(COMMAND patchelf --force-rpath --set-rpath \\\$ORIGIN \${MFEM_LIB})
-        endforeach()
     ")
 endif()
+
+# Fix RPATH for MFEM libraries using external script
+install(SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/../../fix_rpath.cmake)
