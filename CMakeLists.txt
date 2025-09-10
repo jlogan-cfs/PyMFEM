@@ -579,7 +579,7 @@ function(build_mfem_parallel)
         -DMFEM_ENABLE_MINIAPPS=ON
         -DMFEM_USE_ZLIB=ON
         -DMFEM_USE_MPI=ON
-        -DMFEM_USE_EXCEPTIONS=OFF
+        -DMFEM_USE_EXCEPTIONS=ON
         -DMFEM_THREAD_SAFE=ON
         -DMFEM_USE_OPENMP=OFF
         -DMFEM_USE_SUITESPARSE=OFF

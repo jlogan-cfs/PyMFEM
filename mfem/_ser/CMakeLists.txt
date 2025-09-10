@@ -179,6 +179,8 @@ add_custom_command(TARGET lininteg POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/lininteg.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_ser/lininteg.py
     COMMAND ${Python_EXECUTABLE} generate_lininteg_ext.py
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_ser/lininteg.py
+    # Fix imports in generated lininteg.py to use _ser instead of _par
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../fix_ser_imports.py ${CMAKE_BINARY_DIR}/lininteg.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../common
     COMMENT "Generating lininteg extensions"
 )
@@ -187,13 +189,19 @@ add_custom_command(TARGET bilininteg POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/bilininteg.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_ser/bilininteg.py
     COMMAND ${Python_EXECUTABLE} generate_bilininteg_ext.py
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_ser/bilininteg.py
+    # Fix imports in generated bilininteg.py to use _ser instead of _par
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../fix_ser_imports.py ${CMAKE_BINARY_DIR}/bilininteg.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../common
     COMMENT "Generating bilininteg extensions"
 )
 
-# Install Python files
+# Install Python files from source directory (non-generated ones)
 file(GLOB PYTHON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.py")
 install(FILES ${PYTHON_FILES} DESTINATION mfem/_ser)
+
+# Install the generated Python wrapper files (SWIG generates these in the build directory)
+install(FILES ${CMAKE_BINARY_DIR}/lininteg.py DESTINATION mfem/_ser OPTIONAL)
+install(FILES ${CMAKE_BINARY_DIR}/bilininteg.py DESTINATION mfem/_ser OPTIONAL)
 
 # Install the serial MFEM library to .dylibs subdirectory
 # Only install if we're building serial only (not parallel)
