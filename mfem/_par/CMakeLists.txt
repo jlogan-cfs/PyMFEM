@@ -369,10 +369,49 @@ if(APPLE)
     install(CODE "
         file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_par/*.so\")
         foreach(LIB \${SHARED_LIBS})
-            execute_process(COMMAND install_name_tool -add_rpath @loader_path/../.dylibs \${LIB})
-            execute_process(COMMAND install_name_tool -change ${MFEM_LIB_INSTALL} @rpath/libmfem.dylib \${LIB})
-            execute_process(COMMAND install_name_tool -change ${HYPRE_LIB_INSTALL} @rpath/libHYPRE.dylib \${LIB})
-            execute_process(COMMAND install_name_tool -change ${METIS_LIB_INSTALL} @rpath/libmetis.dylib \${LIB})
+            get_filename_component(LIB_NAME \${LIB} NAME)
+            message(STATUS \"Fixing Python extension RPATH: \${LIB_NAME}\")
+            
+            # Add RPATH to .dylibs directory
+            execute_process(COMMAND install_name_tool -add_rpath @loader_path/../.dylibs \${LIB} ERROR_QUIET)
+            
+            # Get actual dependency paths and fix them
+            execute_process(COMMAND otool -L \${LIB} OUTPUT_VARIABLE OTOOL_OUT)
+            string(REPLACE \"\\n\" \";\" OTOOL_LINES \"\${OTOOL_OUT}\")
+            
+            foreach(LINE \${OTOOL_LINES})
+                string(STRIP \"\${LINE}\" LINE)
+                
+                # Fix MFEM library path
+                if(LINE MATCHES \".*libmfem.*\\.dylib.*\" AND NOT LINE MATCHES \"@.*path.*\")
+                    string(REPLACE \" (\" \";\" PARTS \"\${LINE}\")
+                    list(GET PARTS 0 OLD_PATH)
+                    string(STRIP \"\${OLD_PATH}\" OLD_PATH)
+                    string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
+                    message(STATUS \"  Changing MFEM path: \${OLD_PATH} -> @loader_path/../.dylibs/libmfem.dylib\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/../.dylibs/libmfem.dylib\" \${LIB})
+                endif()
+                
+                # Fix HYPRE library path
+                if(LINE MATCHES \".*libHYPRE.*\\.dylib.*\" AND NOT LINE MATCHES \"@.*path.*\")
+                    string(REPLACE \" (\" \";\" PARTS \"\${LINE}\")
+                    list(GET PARTS 0 OLD_PATH)
+                    string(STRIP \"\${OLD_PATH}\" OLD_PATH)
+                    string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
+                    message(STATUS \"  Changing HYPRE path: \${OLD_PATH} -> @loader_path/../.dylibs/libHYPRE.dylib\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/../.dylibs/libHYPRE.dylib\" \${LIB})
+                endif()
+                
+                # Fix METIS library path
+                if(LINE MATCHES \".*libmetis.*\\.dylib.*\" AND NOT LINE MATCHES \"@.*path.*\")
+                    string(REPLACE \" (\" \";\" PARTS \"\${LINE}\")
+                    list(GET PARTS 0 OLD_PATH)
+                    string(STRIP \"\${OLD_PATH}\" OLD_PATH)
+                    string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
+                    message(STATUS \"  Changing METIS path: \${OLD_PATH} -> @loader_path/../.dylibs/libmetis.dylib\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/../.dylibs/libmetis.dylib\" \${LIB})
+                endif()
+            endforeach()
         endforeach()
     ")
 endif()
