@@ -112,6 +112,12 @@ foreach(MFEM_LIB ${MFEM_LIBS})
         
     else()
         # Linux: Use chrpath
+        # First delete any existing RPATH/RUNPATH to avoid conflicts
+        execute_process(
+            COMMAND chrpath -d ${MFEM_LIB}
+            ERROR_QUIET
+        )
+        # Then set the new RPATH
         execute_process(
             COMMAND chrpath -r "$ORIGIN" ${MFEM_LIB}
             RESULT_VARIABLE RPATH_RESULT
@@ -121,7 +127,6 @@ foreach(MFEM_LIB ${MFEM_LIBS})
         execute_process(
             COMMAND ldd ${MFEM_LIB}
             OUTPUT_VARIABLE LDD_OUTPUT
-            ERROR_QUIET
         )
         
         # Debug: show the ldd output to see what we're working with

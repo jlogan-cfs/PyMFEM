@@ -296,7 +296,7 @@ else()
             message(STATUS \"Fixing Python extension RPATH: \${LIB_NAME}\")
             
             # Set RPATH to look in .dylibs directory using chrpath
-            execute_process(COMMAND chrpath -r \"\$ORIGIN/../.dylibs\" \${LIB} ERROR_QUIET)
+            execute_process(COMMAND chrpath -r \"\$ORIGIN/../.dylibs\" \${LIB})
             
             message(STATUS \"  Set RPATH to \$ORIGIN/../.dylibs for \${LIB_NAME}\")
         endforeach()
