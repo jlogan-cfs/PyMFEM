@@ -111,13 +111,7 @@ foreach(MFEM_LIB ${MFEM_LIBS})
         endif()
         
     else()
-        # Linux: Use chrpath
-        # First delete any existing RPATH/RUNPATH to avoid conflicts
-        execute_process(
-            COMMAND chrpath -d ${MFEM_LIB}
-            ERROR_QUIET
-        )
-        # Then set the new RPATH
+        # Linux: Use chrpath to replace existing RPATH
         execute_process(
             COMMAND chrpath -r "$ORIGIN" ${MFEM_LIB}
             RESULT_VARIABLE RPATH_RESULT
