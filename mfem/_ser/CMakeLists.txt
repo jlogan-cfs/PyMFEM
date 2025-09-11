@@ -143,11 +143,21 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     endforeach()
     
     # Link against Python and MFEM shared library
-    # Platform-specific library extensions
-    if(APPLE)
-        set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.dylib")
+    # Use parallel MFEM library when both serial and parallel are built
+    if(BUILD_PARALLEL)
+        # Link against parallel MFEM so symbols match at runtime
+        if(APPLE)
+            set(MFEM_LIB "${MFEM_SOURCE}/build_par/install/lib/libmfem.dylib")
+        else()
+            set(MFEM_LIB "${MFEM_SOURCE}/build_par/install/lib/libmfem.so")
+        endif()
     else()
-        set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.so")
+        # Link against serial MFEM when only serial is built
+        if(APPLE)
+            set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.dylib")
+        else()
+            set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.so")
+        endif()
     endif()
     
     target_link_libraries(${MODULE_NAME} 
@@ -196,8 +206,11 @@ add_custom_command(TARGET bilininteg POST_BUILD
 )
 
 # Install Python files from source directory (non-generated ones)
-file(GLOB PYTHON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.py")
-install(FILES ${PYTHON_FILES} DESTINATION mfem/_ser)
+install(FILES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/setup.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tmop_modules.py"
+    DESTINATION mfem/_ser)
 
 # Install the generated Python wrapper files (SWIG generates these in the build directory)
 install(FILES ${CMAKE_BINARY_DIR}/lininteg.py DESTINATION mfem/_ser OPTIONAL)
