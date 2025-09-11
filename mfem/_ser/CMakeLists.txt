@@ -287,6 +287,20 @@ if(APPLE)
             endforeach()
         endforeach()
     ")
+else()
+    # Linux RPATH fixing using patchelf
+    install(CODE "
+        file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_ser/*.so\")
+        foreach(LIB \${SHARED_LIBS})
+            get_filename_component(LIB_NAME \${LIB} NAME)
+            message(STATUS \"Fixing Python extension RPATH: \${LIB_NAME}\")
+            
+            # Set RPATH to look in .dylibs directory using patchelf
+            execute_process(COMMAND patchelf --set-rpath \"\$ORIGIN/../.dylibs\" \${LIB} ERROR_QUIET)
+            
+            message(STATUS \"  Set RPATH to \$ORIGIN/../.dylibs for \${LIB_NAME}\")
+        endforeach()
+    ")
 endif()
 
 # Fix RPATH for MFEM libraries using external script

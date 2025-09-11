@@ -117,6 +117,18 @@ foreach(MFEM_LIB ${MFEM_LIBS})
             RESULT_VARIABLE RPATH_RESULT
         )
         
+        # Check current dependencies with ldd
+        execute_process(
+            COMMAND ldd ${MFEM_LIB}
+            OUTPUT_VARIABLE LDD_OUTPUT
+            ERROR_QUIET
+        )
+        
+        # Debug: show the ldd output to see what we're working with
+        message(STATUS "  DEBUG: ldd output:")
+        string(REPLACE "\n" "\n    " DEBUG_OUTPUT "${LDD_OUTPUT}")
+        message(STATUS "    ${DEBUG_OUTPUT}")
+        
         if(RPATH_RESULT EQUAL 0)
             message(STATUS "  ✓ Successfully fixed Linux RPATH for ${MFEM_LIB_NAME}")
         else()
