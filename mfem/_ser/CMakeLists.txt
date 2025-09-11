@@ -17,6 +17,11 @@ message(STATUS "PyMFEM _ser: SWIG_LIB_DIR = ${SWIG_LIB_DIR}")
 # Find required packages
 find_package(PkgConfig REQUIRED)
 
+# When parallel build is enabled, serial modules need MPI includes too
+if(BUILD_PARALLEL)
+    find_package(MPI REQUIRED)
+endif()
+
 # Set SWIG properties
 # set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/*.i PROPERTY CPLUSPLUS ON)
 # set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/*.i PROPERTY SWIG_MODULE_NAME ${SWIG_MODULE_NAME})
@@ -56,6 +61,11 @@ include_directories(
     ${MFEM_SOURCE}/build${MFEM_BUILD_SUFFIX}/config
     ${MFEM_SOURCE}/build${MFEM_BUILD_SUFFIX}/install/include
 )
+
+# Add MPI includes when parallel build is enabled
+if(BUILD_PARALLEL)
+    include_directories(${MPI_CXX_INCLUDE_DIRS})
+endif()
 
 # Find numpy include directory
 execute_process(
