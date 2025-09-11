@@ -40,15 +40,21 @@ endforeach()
 # list(FILTER SWIG_INTERFACES EXCLUDE REGEX ".*/(communication|hypre|pfespace|pgridfunc|pbilinearform|plinearform|pmesh|pncmesh|pnonlinearform|prestriction|psubmesh|ptransfermap|dist_solver|enzyme|gslib|pumi|strumpack|schwarz|sidredatacollection)\.i$")
 
 # Include directories for serial build
-# Include both MFEM source (for .hpp files) and build directory (for config.hpp)
+# When parallel build is enabled, serial modules use parallel build headers to match the library
+if(BUILD_PARALLEL)
+    set(MFEM_BUILD_SUFFIX "_par")
+else()
+    set(MFEM_BUILD_SUFFIX "")
+endif()
+
 include_directories(
     ${Python_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../common
     ${MFEM_SOURCE}
-    ${MFEM_SOURCE}/build
-    ${MFEM_SOURCE}/build/config
-    ${MFEM_SOURCE}/build/install/include
+    ${MFEM_SOURCE}/build${MFEM_BUILD_SUFFIX}
+    ${MFEM_SOURCE}/build${MFEM_BUILD_SUFFIX}/config
+    ${MFEM_SOURCE}/build${MFEM_BUILD_SUFFIX}/install/include
 )
 
 # Find numpy include directory
