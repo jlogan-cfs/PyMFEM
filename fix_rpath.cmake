@@ -111,9 +111,9 @@ foreach(MFEM_LIB ${MFEM_LIBS})
         endif()
         
     else()
-        # Linux: Use patchelf
+        # Linux: Use chrpath
         execute_process(
-            COMMAND patchelf --force-rpath --set-rpath "$ORIGIN" ${MFEM_LIB}
+            COMMAND chrpath -r "$ORIGIN" ${MFEM_LIB}
             RESULT_VARIABLE RPATH_RESULT
         )
         
