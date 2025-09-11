@@ -258,8 +258,8 @@ if(LININTEG_INTERFACE)
     
     # Post-process lininteg extensions
     add_custom_command(TARGET ${MODULE_NAME}_par POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_BINARY_DIR}/swig_par/${MODULE_NAME}.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_par/${MODULE_NAME}.py
-        COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_BINARY_DIR}/swig_par/${MODULE_NAME}.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_ser/${MODULE_NAME}.py
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/swig_par/${MODULE_NAME}.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_par/${MODULE_NAME}.py
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/swig_par/${MODULE_NAME}.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_ser/${MODULE_NAME}.py
         COMMAND ${Python_EXECUTABLE} generate_lininteg_ext.py
         COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_par/${MODULE_NAME}.py
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../common
@@ -331,8 +331,8 @@ if(BILININTEG_INTERFACE)
     
     # Post-process bilininteg extensions
     add_custom_command(TARGET ${MODULE_NAME}_par POST_BUILD  
-        COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_BINARY_DIR}/swig_par/${MODULE_NAME}.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_par/${MODULE_NAME}.py
-        COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_BINARY_DIR}/swig_par/${MODULE_NAME}.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_ser/${MODULE_NAME}.py
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/swig_par/${MODULE_NAME}.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_par/${MODULE_NAME}.py
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/swig_par/${MODULE_NAME}.py ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_ser/${MODULE_NAME}.py
         COMMAND ${Python_EXECUTABLE} generate_bilininteg_ext.py
         COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_par/${MODULE_NAME}.py
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../common
