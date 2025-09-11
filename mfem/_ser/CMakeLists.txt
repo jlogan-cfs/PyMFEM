@@ -17,11 +17,6 @@ message(STATUS "PyMFEM _ser: SWIG_LIB_DIR = ${SWIG_LIB_DIR}")
 # Find required packages
 find_package(PkgConfig REQUIRED)
 
-# When parallel build is enabled, serial modules need MPI includes too
-if(BUILD_PARALLEL)
-    find_package(MPI REQUIRED)
-endif()
-
 # Set SWIG properties
 # set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/*.i PROPERTY CPLUSPLUS ON)
 # set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/*.i PROPERTY SWIG_MODULE_NAME ${SWIG_MODULE_NAME})
@@ -45,27 +40,17 @@ endforeach()
 # list(FILTER SWIG_INTERFACES EXCLUDE REGEX ".*/(communication|hypre|pfespace|pgridfunc|pbilinearform|plinearform|pmesh|pncmesh|pnonlinearform|prestriction|psubmesh|ptransfermap|dist_solver|enzyme|gslib|pumi|strumpack|schwarz|sidredatacollection)\.i$")
 
 # Include directories for serial build
-# When parallel build is enabled, serial modules use parallel build headers to match the library
-if(BUILD_PARALLEL)
-    set(MFEM_BUILD_SUFFIX "_par")
-else()
-    set(MFEM_BUILD_SUFFIX "")
-endif()
-
+# Always use serial build directories for serial modules
 include_directories(
     ${Python_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../common
     ${MFEM_SOURCE}
-    ${MFEM_SOURCE}/build${MFEM_BUILD_SUFFIX}
-    ${MFEM_SOURCE}/build${MFEM_BUILD_SUFFIX}/config
-    ${MFEM_SOURCE}/build${MFEM_BUILD_SUFFIX}/install/include
+    ${MFEM_SOURCE}/build
+    ${MFEM_SOURCE}/build/config
+    ${MFEM_SOURCE}/build/install/include
 )
 
-# Add MPI includes when parallel build is enabled
-if(BUILD_PARALLEL)
-    include_directories(${MPI_CXX_INCLUDE_DIRS})
-endif()
 
 # Find numpy include directory
 execute_process(
@@ -232,28 +217,14 @@ install(FILES
 install(FILES ${CMAKE_BINARY_DIR}/lininteg.py DESTINATION mfem/_ser OPTIONAL)
 install(FILES ${CMAKE_BINARY_DIR}/bilininteg.py DESTINATION mfem/_ser OPTIONAL)
 
-# Install the serial MFEM library to .dylibs subdirectory
-# Only install if we're building serial only (not parallel)
-if(NOT BUILD_PARALLEL)
-    install(DIRECTORY "${MFEM_SOURCE}/build/install/lib/"
-            DESTINATION mfem/.dylibs
-            FILES_MATCHING PATTERN "libmfem.*"
-            PATTERN "cmake" EXCLUDE)
-endif()
+# Install the serial MFEM library to serial-specific .dylibs subdirectory
+install(DIRECTORY "${MFEM_SOURCE}/build/install/lib/"
+        DESTINATION mfem/_ser/.dylibs
+        FILES_MATCHING PATTERN "libmfem.*"
+        PATTERN "cmake" EXCLUDE)
 
-# Install HYPRE and METIS libraries if they exist (needed for serial build too)
-if(APPLE)
-    set(HYPRE_LIB_INSTALL "${EXT_PREFIX}/lib/libHYPRE.dylib")
-    set(METIS_LIB_INSTALL "${EXT_PREFIX}/lib/libmetis.dylib")
-else()
-    set(HYPRE_LIB_INSTALL "${EXT_PREFIX}/lib/libHYPRE.so")
-    set(METIS_LIB_INSTALL "${EXT_PREFIX}/lib/libmetis.so")
-endif()
 
-install(FILES ${HYPRE_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)  
-install(FILES ${METIS_LIB_INSTALL} DESTINATION mfem/.dylibs OPTIONAL)
-
-# Fix RPATHs for Python extension modules to find libraries in .dylibs
+# Fix RPATHs for Python extension modules to find libraries in _ser/.dylibs
 if(APPLE)
     install(CODE "
         file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_ser/*.so\")
@@ -261,8 +232,8 @@ if(APPLE)
             get_filename_component(LIB_NAME \${LIB} NAME)
             message(STATUS \"Fixing Python extension RPATH: \${LIB_NAME}\")
             
-            # Add RPATH to .dylibs directory
-            execute_process(COMMAND install_name_tool -add_rpath @loader_path/../.dylibs \${LIB} ERROR_QUIET)
+            # Add RPATH to _ser/.dylibs directory
+            execute_process(COMMAND install_name_tool -add_rpath @loader_path/.dylibs \${LIB} ERROR_QUIET)
             
             # Get actual dependency paths and fix them
             execute_process(COMMAND otool -L \${LIB} OUTPUT_VARIABLE OTOOL_OUT)
@@ -277,28 +248,8 @@ if(APPLE)
                     list(GET PARTS 0 OLD_PATH)
                     string(STRIP \"\${OLD_PATH}\" OLD_PATH)
                     string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing MFEM path: \${OLD_PATH} -> @loader_path/../.dylibs/libmfem.dylib\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/../.dylibs/libmfem.dylib\" \${LIB})
-                endif()
-                
-                # Fix HYPRE library path
-                if(LINE MATCHES \".*libHYPRE.*\\.dylib.*\" AND NOT LINE MATCHES \"@.*path.*\")
-                    string(REPLACE \" (\" \";\" PARTS \"\${LINE}\")
-                    list(GET PARTS 0 OLD_PATH)
-                    string(STRIP \"\${OLD_PATH}\" OLD_PATH)
-                    string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing HYPRE path: \${OLD_PATH} -> @loader_path/../.dylibs/libHYPRE.dylib\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/../.dylibs/libHYPRE.dylib\" \${LIB})
-                endif()
-                
-                # Fix METIS library path
-                if(LINE MATCHES \".*libmetis.*\\.dylib.*\" AND NOT LINE MATCHES \"@.*path.*\")
-                    string(REPLACE \" (\" \";\" PARTS \"\${LINE}\")
-                    list(GET PARTS 0 OLD_PATH)
-                    string(STRIP \"\${OLD_PATH}\" OLD_PATH)
-                    string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing METIS path: \${OLD_PATH} -> @loader_path/../.dylibs/libmetis.dylib\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/../.dylibs/libmetis.dylib\" \${LIB})
+                    message(STATUS \"  Changing MFEM path: \${OLD_PATH} -> @loader_path/.dylibs/libmfem.dylib\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libmfem.dylib\" \${LIB})
                 endif()
             endforeach()
         endforeach()
@@ -311,10 +262,10 @@ else()
             get_filename_component(LIB_NAME \${LIB} NAME)
             message(STATUS \"Fixing Python extension RPATH: \${LIB_NAME}\")
             
-            # Set RPATH to look in .dylibs directory using chrpath
-            execute_process(COMMAND chrpath -r \"\$ORIGIN/../.dylibs\" \${LIB})
+            # Set RPATH to look in _ser/.dylibs directory using chrpath
+            execute_process(COMMAND chrpath -r \"\$ORIGIN/.dylibs\" \${LIB})
             
-            message(STATUS \"  Set RPATH to \$ORIGIN/../.dylibs for \${LIB_NAME}\")
+            message(STATUS \"  Set RPATH to \$ORIGIN/.dylibs for \${LIB_NAME}\")
         endforeach()
     ")
 endif()

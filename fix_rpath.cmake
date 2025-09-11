@@ -3,8 +3,10 @@
 
 message(STATUS "Fixing RPATH for MFEM libraries...")
 
-# Find all MFEM libraries in .dylibs directory
-file(GLOB MFEM_LIBS "${CMAKE_INSTALL_PREFIX}/mfem/.dylibs/libmfem.*")
+# Find all MFEM libraries in serial and parallel .dylibs directories
+file(GLOB MFEM_LIBS_SER "${CMAKE_INSTALL_PREFIX}/mfem/_ser/.dylibs/libmfem.*")
+file(GLOB MFEM_LIBS_PAR "${CMAKE_INSTALL_PREFIX}/mfem/_par/.dylibs/libmfem.*")
+set(MFEM_LIBS ${MFEM_LIBS_SER} ${MFEM_LIBS_PAR})
 
 foreach(MFEM_LIB ${MFEM_LIBS})
     get_filename_component(MFEM_LIB_NAME ${MFEM_LIB} NAME)
