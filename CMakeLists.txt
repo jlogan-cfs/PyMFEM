@@ -387,7 +387,7 @@ function(build_metis)
         # Fix library install names on macOS
         if(APPLE)
             execute_process(
-                COMMAND install_name_tool -id ${metis_install_dir}/lib/libmetis.dylib ${metis_install_dir}/lib/libmetis.dylib
+                COMMAND install_name_tool -id ${metis_install_dir}/lib/libmetis.${LIB_EXTENSION} ${metis_install_dir}/lib/libmetis.${LIB_EXTENSION}
                 RESULT_VARIABLE fix_result
             )
         endif()
@@ -499,8 +499,8 @@ function(build_mfem)
         COMMAND ${CMAKE_COMMAND} 
             -DCMAKE_BUILD_TYPE=Release
             -DBUILD_SHARED_LIBS=ON
-            -DMFEM_ENABLE_EXAMPLES=ON
-            -DMFEM_ENABLE_MINIAPPS=ON
+            -DMFEM_ENABLE_EXAMPLES=OFF
+            -DMFEM_ENABLE_MINIAPPS=OFF
             -DMFEM_USE_ZLIB=ON
             -DMFEM_USE_MPI=OFF
             -DMFEM_USE_EXCEPTIONS=ON
@@ -572,8 +572,8 @@ function(build_mfem_parallel)
     set(MFEM_PAR_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=Release
         -DBUILD_SHARED_LIBS=ON
-        -DMFEM_ENABLE_EXAMPLES=ON
-        -DMFEM_ENABLE_MINIAPPS=ON
+        -DMFEM_ENABLE_EXAMPLES=OFF
+        -DMFEM_ENABLE_MINIAPPS=OFF
         -DMFEM_USE_ZLIB=ON
         -DMFEM_USE_MPI=ON
         -DMFEM_USE_EXCEPTIONS=ON
