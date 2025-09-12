@@ -25,3 +25,8 @@ external/*
 # Temporary symlinks created during parallel-only builds
 mfem/_ser/lininteg.py
 mfem/_ser/bilininteg.py
+
+# Sim outputs
+*.mesh
+*.gf
+*.0+
