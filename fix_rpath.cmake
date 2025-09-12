@@ -22,20 +22,20 @@ foreach(MFEM_LIB ${MFEM_LIBS})
             COMMAND install_name_tool -delete_rpath "${MFEM_SOURCE}/build_par/install/lib" ${MFEM_LIB}
             ERROR_QUIET
         )
-        # Check if @loader_path already exists to avoid duplicate error
+        # Check if CMAKE_INSTALL_RPATH already exists to avoid duplicate error
         execute_process(
             COMMAND otool -l ${MFEM_LIB}
             OUTPUT_VARIABLE OTOOL_L_OUTPUT
         )
         
-        if(NOT OTOOL_L_OUTPUT MATCHES ".*@loader_path.*")
+        if(NOT OTOOL_L_OUTPUT MATCHES ".*${CMAKE_INSTALL_RPATH}.*")
             execute_process(
-                COMMAND install_name_tool -add_rpath "@loader_path" ${MFEM_LIB}
+                COMMAND install_name_tool -add_rpath "${CMAKE_INSTALL_RPATH}" ${MFEM_LIB}
                 RESULT_VARIABLE RPATH_RESULT
             )
-            message(STATUS "  Added @loader_path RPATH")
+            message(STATUS "  Added ${CMAKE_INSTALL_RPATH} RPATH")
         else()
-            message(STATUS "  @loader_path RPATH already exists")
+            message(STATUS "  ${CMAKE_INSTALL_RPATH} RPATH already exists")
             set(RPATH_RESULT 0)
         endif()
         
@@ -64,10 +64,10 @@ foreach(MFEM_LIB ${MFEM_LIBS})
                 string(REGEX REPLACE "^[\t ]+" "" HYPRE_FULL_PATH "${HYPRE_FULL_PATH}")
                 message(STATUS "  Found HYPRE dependency line: '${LINE}'")
                 message(STATUS "  Extracted HYPRE path: '${HYPRE_FULL_PATH}'")
-                if(NOT HYPRE_FULL_PATH STREQUAL "@loader_path/libHYPRE.${LIB_EXTENSION}")
-                    message(STATUS "  Changing HYPRE path from: '${HYPRE_FULL_PATH}' to '@loader_path/libHYPRE.${LIB_EXTENSION}'")
+                if(NOT HYPRE_FULL_PATH STREQUAL "${CMAKE_INSTALL_RPATH}/libHYPRE.${LIB_EXTENSION}")
+                    message(STATUS "  Changing HYPRE path from: '${HYPRE_FULL_PATH}' to '${CMAKE_INSTALL_RPATH}/libHYPRE.${LIB_EXTENSION}'")
                     execute_process(
-                        COMMAND install_name_tool -change "${HYPRE_FULL_PATH}" "@loader_path/libHYPRE.${LIB_EXTENSION}" ${MFEM_LIB}
+                        COMMAND install_name_tool -change "${HYPRE_FULL_PATH}" "${CMAKE_INSTALL_RPATH}/libHYPRE.${LIB_EXTENSION}" ${MFEM_LIB}
                         RESULT_VARIABLE HYPRE_RESULT
                     )
                     if(HYPRE_RESULT EQUAL 0)
@@ -89,10 +89,10 @@ foreach(MFEM_LIB ${MFEM_LIBS})
                 string(REGEX REPLACE "^[\t ]+" "" METIS_FULL_PATH "${METIS_FULL_PATH}")
                 message(STATUS "  Found METIS dependency line: '${LINE}'")
                 message(STATUS "  Extracted METIS path: '${METIS_FULL_PATH}'")
-                if(NOT METIS_FULL_PATH STREQUAL "@loader_path/libmetis.${LIB_EXTENSION}")
-                    message(STATUS "  Changing METIS path from: '${METIS_FULL_PATH}' to '@loader_path/libmetis.${LIB_EXTENSION}'")
+                if(NOT METIS_FULL_PATH STREQUAL "${CMAKE_INSTALL_RPATH}/libmetis.${LIB_EXTENSION}")
+                    message(STATUS "  Changing METIS path from: '${METIS_FULL_PATH}' to '${CMAKE_INSTALL_RPATH}/libmetis.${LIB_EXTENSION}'")
                     execute_process(
-                        COMMAND install_name_tool -change "${METIS_FULL_PATH}" "@loader_path/libmetis.${LIB_EXTENSION}" ${MFEM_LIB}
+                        COMMAND install_name_tool -change "${METIS_FULL_PATH}" "${CMAKE_INSTALL_RPATH}/libmetis.${LIB_EXTENSION}" ${MFEM_LIB}
                         RESULT_VARIABLE METIS_RESULT
                     )
                     if(METIS_RESULT EQUAL 0)
@@ -115,7 +115,7 @@ foreach(MFEM_LIB ${MFEM_LIBS})
     else()
         # Linux: Use chrpath to replace existing RPATH
         execute_process(
-            COMMAND chrpath -r "$ORIGIN" ${MFEM_LIB}
+            COMMAND chrpath -r "${CMAKE_INSTALL_RPATH}" ${MFEM_LIB}
             RESULT_VARIABLE RPATH_RESULT
         )
         

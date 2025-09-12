@@ -164,12 +164,14 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
         ${METIS_LIB}
     )
     
-    # Set RPATH for Linux to find libraries in .dylibs directory
+    # Set RPATH to find libraries in .dylibs directory
+    set_target_properties(${MODULE_NAME}_par PROPERTIES
+        INSTALL_RPATH "${CMAKE_INSTALL_RPATH}/../.dylibs"
+        BUILD_WITH_INSTALL_RPATH ON
+    )
     if(UNIX AND NOT APPLE)
         set_target_properties(${MODULE_NAME}_par PROPERTIES
             BUILD_RPATH_USE_ORIGIN ON
-            INSTALL_RPATH "$ORIGIN/../.dylibs"
-            BUILD_WITH_INSTALL_RPATH ON
         )
     endif()
     
@@ -237,12 +239,14 @@ if(LININTEG_INTERFACE)
         ${METIS_LIB}
     )
     
-    # Set RPATH for Linux to find libraries in .dylibs directory
+    # Set RPATH to find libraries in .dylibs directory
+    set_target_properties(${MODULE_NAME}_par PROPERTIES
+        INSTALL_RPATH "${CMAKE_INSTALL_RPATH}/../.dylibs"
+        BUILD_WITH_INSTALL_RPATH ON
+    )
     if(UNIX AND NOT APPLE)
         set_target_properties(${MODULE_NAME}_par PROPERTIES
             BUILD_RPATH_USE_ORIGIN ON
-            INSTALL_RPATH "$ORIGIN/../.dylibs"
-            BUILD_WITH_INSTALL_RPATH ON
         )
     endif()
     
@@ -310,12 +314,14 @@ if(BILININTEG_INTERFACE)
         ${METIS_LIB}
     )
     
-    # Set RPATH for Linux to find libraries in .dylibs directory
+    # Set RPATH to find libraries in .dylibs directory
+    set_target_properties(${MODULE_NAME}_par PROPERTIES
+        INSTALL_RPATH "${CMAKE_INSTALL_RPATH}/../.dylibs"
+        BUILD_WITH_INSTALL_RPATH ON
+    )
     if(UNIX AND NOT APPLE)
         set_target_properties(${MODULE_NAME}_par PROPERTIES
             BUILD_RPATH_USE_ORIGIN ON
-            INSTALL_RPATH "$ORIGIN/../.dylibs"
-            BUILD_WITH_INSTALL_RPATH ON
         )
     endif()
     
@@ -360,7 +366,7 @@ if(APPLE)
             message(STATUS \"Fixing Python extension RPATH: \${LIB_NAME}\")
             
             # Add RPATH to _par/.dylibs directory
-            execute_process(COMMAND install_name_tool -add_rpath @loader_path/.dylibs \${LIB} ERROR_QUIET)
+            execute_process(COMMAND install_name_tool -add_rpath ${CMAKE_INSTALL_RPATH}/.dylibs \${LIB} ERROR_QUIET)
             
             # Get actual dependency paths and fix them
             execute_process(COMMAND otool -L \${LIB} OUTPUT_VARIABLE OTOOL_OUT)
@@ -375,8 +381,8 @@ if(APPLE)
                     list(GET PARTS 0 OLD_PATH)
                     string(STRIP \"\${OLD_PATH}\" OLD_PATH)
                     string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing MFEM path: \${OLD_PATH} -> @loader_path/.dylibs/libmfem.${LIB_EXTENSION}\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libmfem.${LIB_EXTENSION}\" \${LIB})
+                    message(STATUS \"  Changing MFEM path: \${OLD_PATH} -> ${CMAKE_INSTALL_RPATH}/.dylibs/libmfem.${LIB_EXTENSION}\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"${CMAKE_INSTALL_RPATH}/.dylibs/libmfem.${LIB_EXTENSION}\" \${LIB})
                 endif()
                 
                 # Fix HYPRE library path
@@ -385,8 +391,8 @@ if(APPLE)
                     list(GET PARTS 0 OLD_PATH)
                     string(STRIP \"\${OLD_PATH}\" OLD_PATH)
                     string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing HYPRE path: \${OLD_PATH} -> @loader_path/.dylibs/libHYPRE.${LIB_EXTENSION}\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libHYPRE.${LIB_EXTENSION}\" \${LIB})
+                    message(STATUS \"  Changing HYPRE path: \${OLD_PATH} -> ${CMAKE_INSTALL_RPATH}/.dylibs/libHYPRE.${LIB_EXTENSION}\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"${CMAKE_INSTALL_RPATH}/.dylibs/libHYPRE.${LIB_EXTENSION}\" \${LIB})
                 endif()
                 
                 # Fix METIS library path
@@ -395,8 +401,8 @@ if(APPLE)
                     list(GET PARTS 0 OLD_PATH)
                     string(STRIP \"\${OLD_PATH}\" OLD_PATH)
                     string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing METIS path: \${OLD_PATH} -> @loader_path/.dylibs/libmetis.${LIB_EXTENSION}\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libmetis.${LIB_EXTENSION}\" \${LIB})
+                    message(STATUS \"  Changing METIS path: \${OLD_PATH} -> ${CMAKE_INSTALL_RPATH}/.dylibs/libmetis.${LIB_EXTENSION}\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"${CMAKE_INSTALL_RPATH}/.dylibs/libmetis.${LIB_EXTENSION}\" \${LIB})
                 endif()
             endforeach()
         endforeach()
@@ -410,9 +416,9 @@ else()
             message(STATUS \"Fixing Python extension RPATH: \${LIB_NAME}\")
             
             # Set RPATH to look in _par/.dylibs directory using chrpath
-            execute_process(COMMAND chrpath -r \"\$ORIGIN/.dylibs\" \${LIB})
+            execute_process(COMMAND chrpath -r \"${CMAKE_INSTALL_RPATH}/.dylibs\" \${LIB})
             
-            message(STATUS \"  Set RPATH to \$ORIGIN/.dylibs for \${LIB_NAME}\")
+            message(STATUS \"  Set RPATH to ${CMAKE_INSTALL_RPATH}/.dylibs for \${LIB_NAME}\")
         endforeach()
     ")
 endif()
@@ -420,5 +426,6 @@ endif()
 # Fix RPATH for MFEM libraries using external script  
 install(CODE "
     set(LIB_EXTENSION \"${LIB_EXTENSION}\")
+    set(CMAKE_INSTALL_RPATH \"${CMAKE_INSTALL_RPATH}\")
     include(${CMAKE_CURRENT_SOURCE_DIR}/../../fix_rpath.cmake)
 ")
