@@ -464,11 +464,11 @@ function(build_hypre)
 endfunction()
 
 # Function to build MFEM using CMake
-function(build_mfem)
+function(build_mfem_serial)
     set(mfem_build_dir ${MFEM_SOURCE}/build)
     
     # Check if MFEM is already built
-    if(EXISTS ${mfem_build_dir}/libmfem.a OR EXISTS ${mfem_build_dir}/libmfem.so)
+    if(EXISTS ${mfem_build_dir}/libmfem.a OR EXISTS ${mfem_build_dir}/libmfem.so OR EXISTS ${mfem_build_dir}/libmfem.dylib)
         message(STATUS "MFEM already built at ${mfem_build_dir}")
         return()
     endif()
@@ -568,6 +568,7 @@ function(build_mfem_parallel)
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
         -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+        # Parallel-specific flags
         -DCMAKE_CXX_COMPILER=${MPICXX_COMMAND}
         -DCMAKE_INSTALL_PREFIX=${mfem_build_dir}/install
         -DHYPRE_DIR=${EXT_PREFIX}
@@ -643,29 +644,15 @@ endif()
 
 # Download and build MFEM (always needed - serial first)
 download_mfem()
-build_mfem()
+build_mfem_serial()
 
 # Build parallel MFEM if requested
 if(BUILD_PARALLEL)
     build_mfem_parallel()
 endif()
 
-# Generate header defines now that MFEM source should exist
-if(EXISTS ${MFEM_SOURCE})
-    generate_header_defines(${MFEM_SOURCE} 
-                           ${CMAKE_CURRENT_SOURCE_DIR}/mfem/common/existing_mfem_headers.i)
-else()
-    message(FATAL_ERROR "MFEM source not found at ${MFEM_SOURCE} after download attempt")
-endif()
-
-# SWIG configuration
-# Get SWIG library directory for standard includes
-# execute_process(
-#     COMMAND ${SWIG_EXECUTABLE} -swiglib
-#     OUTPUT_VARIABLE SWIG_LIB_DIR
-#     OUTPUT_STRIP_TRAILING_WHITESPACE
-# )
-# set(SWIG_EXECUTABLE python -m swig)
+# Generate MFEM header defines
+generate_header_defines(${MFEM_SOURCE} ${CMAKE_CURRENT_SOURCE_DIR}/mfem/common/existing_mfem_headers.i)
 
 # Use python-managed swig
 execute_process(
@@ -712,12 +699,8 @@ endif()
 install(DIRECTORY mfem/common/ DESTINATION mfem/common/
         FILES_MATCHING PATTERN "*.py")
 
-# Install data and examples (optional)
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/data)
-    install(DIRECTORY data/ DESTINATION share/mfem/data)
-endif()
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples)
-    install(DIRECTORY examples/ DESTINATION share/mfem/examples 
+# Install data and examples
+install(DIRECTORY data/ DESTINATION share/mfem/data)
+install(DIRECTORY examples/ DESTINATION share/mfem/examples 
             FILES_MATCHING PATTERN "*.py"
             PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-endif()
