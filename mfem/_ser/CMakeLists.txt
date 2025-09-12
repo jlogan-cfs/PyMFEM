@@ -17,17 +17,6 @@ message(STATUS "PyMFEM _ser: SWIG_LIB_DIR = ${SWIG_LIB_DIR}")
 # Find required packages
 find_package(PkgConfig REQUIRED)
 
-# Set SWIG properties
-# set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/*.i PROPERTY CPLUSPLUS ON)
-# set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/*.i PROPERTY SWIG_MODULE_NAME ${SWIG_MODULE_NAME})
-
-# Ensure all SWIG interface files are treated as C++
-# foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
-#     set_property(SOURCE ${SWIG_INTERFACE} PROPERTY CPLUSPLUS ON)
-# endforeach()
-
-# SWIG flags inherited from parent CMakeLists.txt
-
 # Get list of SWIG interface files
 file(GLOB SWIG_INTERFACES "${CMAKE_CURRENT_SOURCE_DIR}/*.i")
 list(LENGTH SWIG_INTERFACES SWIG_COUNT)
@@ -35,9 +24,6 @@ message(STATUS "PyMFEM _ser: Found ${SWIG_COUNT} SWIG interface files")
 foreach(INTERFACE ${SWIG_INTERFACES})
     message(STATUS "PyMFEM _ser: SWIG interface: ${INTERFACE}")
 endforeach()
-
-# Remove problematic interfaces for serial build
-# list(FILTER SWIG_INTERFACES EXCLUDE REGEX ".*/(communication|hypre|pfespace|pgridfunc|pbilinearform|plinearform|pmesh|pncmesh|pnonlinearform|prestriction|psubmesh|ptransfermap|dist_solver|enzyme|gslib|pumi|strumpack|schwarz|sidredatacollection)\.i$")
 
 # Include directories for serial build
 # Always use serial build directories for serial modules
@@ -144,32 +130,16 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     endforeach()
     
     # Link against Python and MFEM shared library
-    # Always use serial MFEM library for serial modules
+    # We'll update the relative path for linking after install
     set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.${LIB_EXTENSION}")
-    
-    target_link_libraries(${MODULE_NAME} 
-        Python::Module
-        ${MFEM_LIB}
-    )
-    
-    # Set RPATH to find libraries in .dylibs directory
-    set_target_properties(${MODULE_NAME} PROPERTIES
-        INSTALL_RPATH "${CMAKE_INSTALL_RPATH}/../.dylibs"
-        BUILD_WITH_INSTALL_RPATH ON
-    )
-    if(UNIX AND NOT APPLE)
-        set_target_properties(${MODULE_NAME} PROPERTIES
-            BUILD_RPATH_USE_ORIGIN ON
-        )
-    endif()
+
+    target_link_libraries(${MODULE_NAME} Python::Module ${MFEM_LIB})
     
     # Install the compiled module
-    install(TARGETS ${MODULE_NAME} 
-            LIBRARY DESTINATION mfem/_ser)
+    install(TARGETS ${MODULE_NAME} LIBRARY DESTINATION mfem/_ser)
     
     # Install the generated Python wrapper file (SWIG generates these in the main build directory)
-    install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.py
-            DESTINATION mfem/_ser)
+    install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.py DESTINATION mfem/_ser)
 endforeach()
 
 # Post-process lininteg and bilininteg modules (similar to legacy setup.py)
