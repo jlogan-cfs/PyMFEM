@@ -374,26 +374,10 @@ function(build_metis)
         ERROR_VARIABLE install_error
     )
     
-    message(STATUS "METIS install result: ${install_result}")
-    if(install_output)
-        message(STATUS "METIS install output: ${install_output}")
-    endif()
     if(install_error)
         message(STATUS "METIS install error: ${install_error}")
     endif()
     
-    if(install_result EQUAL "0")
-        message(STATUS "Successfully built and installed METIS")
-        # Fix library install names on macOS
-        if(APPLE)
-            execute_process(
-                COMMAND install_name_tool -id ${metis_install_dir}/lib/libmetis.${LIB_EXTENSION} ${metis_install_dir}/lib/libmetis.${LIB_EXTENSION}
-                RESULT_VARIABLE fix_result
-            )
-        endif()
-    else()
-        message(FATAL_ERROR "Failed to install METIS")
-    endif()
 endfunction()
 
 # Function to build HYPRE dependency  
