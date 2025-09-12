@@ -151,16 +151,10 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     )
     
     # Link against Python, MPI, parallel MFEM, and dependencies
-    # Platform-specific library extensions
-    if(APPLE)
-        set(MFEM_LIB "${MFEM_SOURCE}/build_par/install/lib/libmfem.dylib")
-        set(HYPRE_LIB "${EXT_PREFIX}/lib/libHYPRE.dylib") 
-        set(METIS_LIB "${EXT_PREFIX}/lib/libmetis.dylib")
-    else()
-        set(MFEM_LIB "${MFEM_SOURCE}/build_par/install/lib/libmfem.so")
-        set(HYPRE_LIB "${EXT_PREFIX}/lib/libHYPRE.so")
-        set(METIS_LIB "${EXT_PREFIX}/lib/libmetis.so")
-    endif()
+    # Use platform-appropriate library extensions
+    set(MFEM_LIB "${MFEM_SOURCE}/build_par/install/lib/libmfem.${LIB_EXTENSION}")
+    set(HYPRE_LIB "${EXT_PREFIX}/lib/libHYPRE.${LIB_EXTENSION}") 
+    set(METIS_LIB "${EXT_PREFIX}/lib/libmetis.${LIB_EXTENSION}")
     
     target_link_libraries(${MODULE_NAME}_par 
         Python::Module 
@@ -345,15 +339,9 @@ file(GLOB PYTHON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.py")
 install(FILES ${PYTHON_FILES} DESTINATION mfem/_par)
 
 # Install required dynamic libraries for wheel distribution
-if(APPLE)
-    set(MFEM_LIB_INSTALL "${MFEM_SOURCE}/build_par/install/lib/libmfem.dylib")
-    set(HYPRE_LIB_INSTALL "${EXT_PREFIX}/lib/libHYPRE.dylib") 
-    set(METIS_LIB_INSTALL "${EXT_PREFIX}/lib/libmetis.dylib")
-else()
-    set(MFEM_LIB_INSTALL "${MFEM_SOURCE}/build_par/install/lib/libmfem.so")
-    set(HYPRE_LIB_INSTALL "${EXT_PREFIX}/lib/libHYPRE.so")
-    set(METIS_LIB_INSTALL "${EXT_PREFIX}/lib/libmetis.so")
-endif()
+set(MFEM_LIB_INSTALL "${MFEM_SOURCE}/build_par/install/lib/libmfem.${LIB_EXTENSION}")
+set(HYPRE_LIB_INSTALL "${EXT_PREFIX}/lib/libHYPRE.${LIB_EXTENSION}") 
+set(METIS_LIB_INSTALL "${EXT_PREFIX}/lib/libmetis.${LIB_EXTENSION}")
 
 # Install the parallel libraries to parallel-specific .dylibs subdirectory
 install(DIRECTORY "${MFEM_SOURCE}/build_par/install/lib/"
@@ -382,33 +370,33 @@ if(APPLE)
                 string(STRIP \"\${LINE}\" LINE)
                 
                 # Fix MFEM library path
-                if(LINE MATCHES \".*libmfem.*\\.dylib.*\" AND NOT LINE MATCHES \"@.*path.*\")
+                if(LINE MATCHES \".*libmfem.*\\.${LIB_EXTENSION}.*\" AND NOT LINE MATCHES \"@.*path.*\")
                     string(REPLACE \" (\" \";\" PARTS \"\${LINE}\")
                     list(GET PARTS 0 OLD_PATH)
                     string(STRIP \"\${OLD_PATH}\" OLD_PATH)
                     string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing MFEM path: \${OLD_PATH} -> @loader_path/.dylibs/libmfem.dylib\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libmfem.dylib\" \${LIB})
+                    message(STATUS \"  Changing MFEM path: \${OLD_PATH} -> @loader_path/.dylibs/libmfem.${LIB_EXTENSION}\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libmfem.${LIB_EXTENSION}\" \${LIB})
                 endif()
                 
                 # Fix HYPRE library path
-                if(LINE MATCHES \".*libHYPRE.*\\.dylib.*\" AND NOT LINE MATCHES \"@.*path.*\")
+                if(LINE MATCHES \".*libHYPRE.*\\.${LIB_EXTENSION}.*\" AND NOT LINE MATCHES \"@.*path.*\")
                     string(REPLACE \" (\" \";\" PARTS \"\${LINE}\")
                     list(GET PARTS 0 OLD_PATH)
                     string(STRIP \"\${OLD_PATH}\" OLD_PATH)
                     string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing HYPRE path: \${OLD_PATH} -> @loader_path/.dylibs/libHYPRE.dylib\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libHYPRE.dylib\" \${LIB})
+                    message(STATUS \"  Changing HYPRE path: \${OLD_PATH} -> @loader_path/.dylibs/libHYPRE.${LIB_EXTENSION}\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libHYPRE.${LIB_EXTENSION}\" \${LIB})
                 endif()
                 
                 # Fix METIS library path
-                if(LINE MATCHES \".*libmetis.*\\.dylib.*\" AND NOT LINE MATCHES \"@.*path.*\")
+                if(LINE MATCHES \".*libmetis.*\\.${LIB_EXTENSION}.*\" AND NOT LINE MATCHES \"@.*path.*\")
                     string(REPLACE \" (\" \";\" PARTS \"\${LINE}\")
                     list(GET PARTS 0 OLD_PATH)
                     string(STRIP \"\${OLD_PATH}\" OLD_PATH)
                     string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing METIS path: \${OLD_PATH} -> @loader_path/.dylibs/libmetis.dylib\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libmetis.dylib\" \${LIB})
+                    message(STATUS \"  Changing METIS path: \${OLD_PATH} -> @loader_path/.dylibs/libmetis.${LIB_EXTENSION}\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libmetis.${LIB_EXTENSION}\" \${LIB})
                 endif()
             endforeach()
         endforeach()
@@ -429,5 +417,8 @@ else()
     ")
 endif()
 
-# Fix RPATH for MFEM libraries using external script
-install(SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/../../fix_rpath.cmake)
+# Fix RPATH for MFEM libraries using external script  
+install(CODE "
+    set(LIB_EXTENSION \"${LIB_EXTENSION}\")
+    include(${CMAKE_CURRENT_SOURCE_DIR}/../../fix_rpath.cmake)
+")

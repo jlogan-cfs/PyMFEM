@@ -52,10 +52,12 @@ if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
     # Handle macOS SIP and Python frameworks
     set(CMAKE_INSTALL_RPATH "@loader_path")
+    set(LIB_EXTENSION "dylib")
 endif()
 
 if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_RPATH "$ORIGIN")
+    set(LIB_EXTENSION "so")
 endif()
 
 # Configuration options from original setup.py
@@ -563,14 +565,9 @@ function(build_mfem_parallel)
     file(MAKE_DIRECTORY ${mfem_build_dir})
     
     # Configure parallel MFEM with CMake (matching legacy setup.py configuration)
-    # Set library extensions based on platform
-    if(APPLE)
-        set(HYPRE_LIB_PATH "${EXT_PREFIX}/lib/libHYPRE.dylib")
-        set(METIS_LIB_PATH "${EXT_PREFIX}/lib/libmetis.dylib")
-    else()
-        set(HYPRE_LIB_PATH "${EXT_PREFIX}/lib/libHYPRE.so")
-        set(METIS_LIB_PATH "${EXT_PREFIX}/lib/libmetis.so")
-    endif()
+    # Use platform-appropriate library extensions
+    set(HYPRE_LIB_PATH "${EXT_PREFIX}/lib/libHYPRE.${LIB_EXTENSION}")
+    set(METIS_LIB_PATH "${EXT_PREFIX}/lib/libmetis.${LIB_EXTENSION}")
     
     set(MFEM_PAR_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=Release

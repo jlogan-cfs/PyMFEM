@@ -56,7 +56,7 @@ foreach(MFEM_LIB ${MFEM_LIBS})
             string(STRIP "${LINE}" LINE)
             
             # Look for HYPRE dependency (not the mfem lib itself)
-            if(LINE MATCHES ".*libHYPRE\\.dylib.*" AND NOT LINE MATCHES ".*libmfem.*")
+            if(LINE MATCHES ".*libHYPRE\\.${LIB_EXTENSION}.*" AND NOT LINE MATCHES ".*libmfem.*")
                 string(REPLACE " (" ";" HYPRE_PARTS "${LINE}")
                 list(GET HYPRE_PARTS 0 HYPRE_FULL_PATH)
                 string(STRIP "${HYPRE_FULL_PATH}" HYPRE_FULL_PATH)
@@ -64,10 +64,10 @@ foreach(MFEM_LIB ${MFEM_LIBS})
                 string(REGEX REPLACE "^[\t ]+" "" HYPRE_FULL_PATH "${HYPRE_FULL_PATH}")
                 message(STATUS "  Found HYPRE dependency line: '${LINE}'")
                 message(STATUS "  Extracted HYPRE path: '${HYPRE_FULL_PATH}'")
-                if(NOT HYPRE_FULL_PATH STREQUAL "@loader_path/libHYPRE.dylib")
-                    message(STATUS "  Changing HYPRE path from: '${HYPRE_FULL_PATH}' to '@loader_path/libHYPRE.dylib'")
+                if(NOT HYPRE_FULL_PATH STREQUAL "@loader_path/libHYPRE.${LIB_EXTENSION}")
+                    message(STATUS "  Changing HYPRE path from: '${HYPRE_FULL_PATH}' to '@loader_path/libHYPRE.${LIB_EXTENSION}'")
                     execute_process(
-                        COMMAND install_name_tool -change "${HYPRE_FULL_PATH}" "@loader_path/libHYPRE.dylib" ${MFEM_LIB}
+                        COMMAND install_name_tool -change "${HYPRE_FULL_PATH}" "@loader_path/libHYPRE.${LIB_EXTENSION}" ${MFEM_LIB}
                         RESULT_VARIABLE HYPRE_RESULT
                     )
                     if(HYPRE_RESULT EQUAL 0)
@@ -81,7 +81,7 @@ foreach(MFEM_LIB ${MFEM_LIBS})
             endif()
             
             # Look for METIS dependency (not the mfem lib itself)
-            if(LINE MATCHES ".*libmetis\\.dylib.*" AND NOT LINE MATCHES ".*libmfem.*")
+            if(LINE MATCHES ".*libmetis\\.${LIB_EXTENSION}.*" AND NOT LINE MATCHES ".*libmfem.*")
                 string(REPLACE " (" ";" METIS_PARTS "${LINE}")
                 list(GET METIS_PARTS 0 METIS_FULL_PATH)
                 string(STRIP "${METIS_FULL_PATH}" METIS_FULL_PATH)
@@ -89,10 +89,10 @@ foreach(MFEM_LIB ${MFEM_LIBS})
                 string(REGEX REPLACE "^[\t ]+" "" METIS_FULL_PATH "${METIS_FULL_PATH}")
                 message(STATUS "  Found METIS dependency line: '${LINE}'")
                 message(STATUS "  Extracted METIS path: '${METIS_FULL_PATH}'")
-                if(NOT METIS_FULL_PATH STREQUAL "@loader_path/libmetis.dylib")
-                    message(STATUS "  Changing METIS path from: '${METIS_FULL_PATH}' to '@loader_path/libmetis.dylib'")
+                if(NOT METIS_FULL_PATH STREQUAL "@loader_path/libmetis.${LIB_EXTENSION}")
+                    message(STATUS "  Changing METIS path from: '${METIS_FULL_PATH}' to '@loader_path/libmetis.${LIB_EXTENSION}'")
                     execute_process(
-                        COMMAND install_name_tool -change "${METIS_FULL_PATH}" "@loader_path/libmetis.dylib" ${MFEM_LIB}
+                        COMMAND install_name_tool -change "${METIS_FULL_PATH}" "@loader_path/libmetis.${LIB_EXTENSION}" ${MFEM_LIB}
                         RESULT_VARIABLE METIS_RESULT
                     )
                     if(METIS_RESULT EQUAL 0)

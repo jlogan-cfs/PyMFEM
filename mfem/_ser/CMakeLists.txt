@@ -144,22 +144,8 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     endforeach()
     
     # Link against Python and MFEM shared library
-    # Use parallel MFEM library when both serial and parallel are built
-    if(BUILD_PARALLEL)
-        # Link against parallel MFEM so symbols match at runtime
-        if(APPLE)
-            set(MFEM_LIB "${MFEM_SOURCE}/build_par/install/lib/libmfem.dylib")
-        else()
-            set(MFEM_LIB "${MFEM_SOURCE}/build_par/install/lib/libmfem.so")
-        endif()
-    else()
-        # Link against serial MFEM when only serial is built
-        if(APPLE)
-            set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.dylib")
-        else()
-            set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.so")
-        endif()
-    endif()
+    # Always use serial MFEM library for serial modules
+    set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.${LIB_EXTENSION}")
     
     target_link_libraries(${MODULE_NAME} 
         Python::Module
@@ -243,13 +229,13 @@ if(APPLE)
                 string(STRIP \"\${LINE}\" LINE)
                 
                 # Fix MFEM library path
-                if(LINE MATCHES \".*libmfem.*\\.dylib.*\" AND NOT LINE MATCHES \"@.*path.*\")
+                if(LINE MATCHES \".*libmfem.*\\.${LIB_EXTENSION}.*\" AND NOT LINE MATCHES \"@.*path.*\")
                     string(REPLACE \" (\" \";\" PARTS \"\${LINE}\")
                     list(GET PARTS 0 OLD_PATH)
                     string(STRIP \"\${OLD_PATH}\" OLD_PATH)
                     string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing MFEM path: \${OLD_PATH} -> @loader_path/.dylibs/libmfem.dylib\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libmfem.dylib\" \${LIB})
+                    message(STATUS \"  Changing MFEM path: \${OLD_PATH} -> @loader_path/.dylibs/libmfem.${LIB_EXTENSION}\")
+                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"@loader_path/.dylibs/libmfem.${LIB_EXTENSION}\" \${LIB})
                 endif()
             endforeach()
         endforeach()
@@ -271,4 +257,7 @@ else()
 endif()
 
 # Fix RPATH for MFEM libraries using external script
-install(SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/../../fix_rpath.cmake)
+install(CODE "
+    set(LIB_EXTENSION \"${LIB_EXTENSION}\")
+    include(${CMAKE_CURRENT_SOURCE_DIR}/../../fix_rpath.cmake)
+")
