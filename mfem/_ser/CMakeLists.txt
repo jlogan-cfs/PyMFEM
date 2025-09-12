@@ -179,53 +179,7 @@ install(DIRECTORY "${MFEM_SOURCE}/build/install/lib/"
         PATTERN "cmake" EXCLUDE)
 
 
-# Fix RPATHs for Python extension modules to find libraries in _ser/.dylibs
-if(APPLE)
-    install(CODE "
-        file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_ser/*.so\")
-        foreach(LIB \${SHARED_LIBS})
-            get_filename_component(LIB_NAME \${LIB} NAME)
-            message(STATUS \"Fixing Python extension RPATH: \${LIB_NAME}\")
-            
-            # Add RPATH to _ser/.dylibs directory
-            execute_process(COMMAND install_name_tool -add_rpath ${CMAKE_INSTALL_RPATH}/.dylibs \${LIB} ERROR_QUIET)
-            
-            # Get actual dependency paths and fix them
-            execute_process(COMMAND otool -L \${LIB} OUTPUT_VARIABLE OTOOL_OUT)
-            string(REPLACE \"\\n\" \";\" OTOOL_LINES \"\${OTOOL_OUT}\")
-            
-            foreach(LINE \${OTOOL_LINES})
-                string(STRIP \"\${LINE}\" LINE)
-                
-                # Fix MFEM library path
-                if(LINE MATCHES \".*libmfem.*\\.${LIB_EXTENSION}.*\" AND NOT LINE MATCHES \"@.*path.*\")
-                    string(REPLACE \" (\" \";\" PARTS \"\${LINE}\")
-                    list(GET PARTS 0 OLD_PATH)
-                    string(STRIP \"\${OLD_PATH}\" OLD_PATH)
-                    string(REGEX REPLACE \"^[\\t ]+\" \"\" OLD_PATH \"\${OLD_PATH}\")
-                    message(STATUS \"  Changing MFEM path: \${OLD_PATH} -> ${CMAKE_INSTALL_RPATH}/.dylibs/libmfem.${LIB_EXTENSION}\")
-                    execute_process(COMMAND install_name_tool -change \"\${OLD_PATH}\" \"${CMAKE_INSTALL_RPATH}/.dylibs/libmfem.${LIB_EXTENSION}\" \${LIB})
-                endif()
-            endforeach()
-        endforeach()
-    ")
-else()
-    # Linux RPATH fixing using chrpath
-    install(CODE "
-        file(GLOB_RECURSE SHARED_LIBS \"\${CMAKE_INSTALL_PREFIX}/mfem/_ser/*.so\")
-        foreach(LIB \${SHARED_LIBS})
-            get_filename_component(LIB_NAME \${LIB} NAME)
-            message(STATUS \"Fixing Python extension RPATH: \${LIB_NAME}\")
-            
-            # Set RPATH to look in _ser/.dylibs directory using chrpath
-            execute_process(COMMAND chrpath -r \"${CMAKE_INSTALL_RPATH}/.dylibs\" \${LIB})
-            
-            message(STATUS \"  Set RPATH to ${CMAKE_INSTALL_RPATH}/.dylibs for \${LIB_NAME}\")
-        endforeach()
-    ")
-endif()
-
-# Fix RPATH for MFEM libraries using external script
+# Fix RPATH for MFEM libraries and Python extensions using external script
 install(CODE "
     set(LIB_EXTENSION \"${LIB_EXTENSION}\")
     set(CMAKE_INSTALL_RPATH \"${CMAKE_INSTALL_RPATH}\")

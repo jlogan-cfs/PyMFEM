@@ -1,7 +1,7 @@
-# CMake script to fix RPATH for MFEM libraries
+# CMake script to fix RPATH for MFEM libraries and Python extensions
 # This script is called during installation to fix library paths
 
-message(STATUS "Fixing RPATH for MFEM libraries...")
+message(STATUS "Fixing RPATH for MFEM libraries and Python extensions...")
 
 # Find all MFEM libraries in serial and parallel .dylibs directories
 file(GLOB MFEM_LIBS_SER "${CMAKE_INSTALL_PREFIX}/mfem/_ser/.dylibs/libmfem.*")
@@ -135,6 +135,57 @@ foreach(MFEM_LIB ${MFEM_LIBS})
         else()
             message(WARNING "  ✗ Failed to fix Linux RPATH for ${MFEM_LIB_NAME}")
         endif()
+    endif()
+endforeach()
+
+# Fix RPATH for Python extension modules
+message(STATUS "Fixing RPATH for Python extension modules...")
+
+# Find all Python extension files in both serial and parallel directories
+file(GLOB_RECURSE PYTHON_EXTS_SER "${CMAKE_INSTALL_PREFIX}/mfem/_ser/*.so")
+file(GLOB_RECURSE PYTHON_EXTS_PAR "${CMAKE_INSTALL_PREFIX}/mfem/_par/*.so")
+
+# Process all Python extensions
+set(ALL_PYTHON_EXTS ${PYTHON_EXTS_SER} ${PYTHON_EXTS_PAR})
+
+foreach(PYTHON_EXT ${ALL_PYTHON_EXTS})
+    get_filename_component(EXT_NAME ${PYTHON_EXT} NAME)
+    message(STATUS "Fixing Python extension RPATH: ${EXT_NAME}")
+    
+    # Determine if this is a serial or parallel extension to set appropriate library list
+    if(PYTHON_EXT MATCHES ".*/mfem/_ser/.*")
+        set(REQUIRED_LIBS "libmfem")  # Serial only needs MFEM
+    else()
+        set(REQUIRED_LIBS "libmfem" "libHYPRE" "libmetis")  # Parallel needs all three
+    endif()
+    
+    if(APPLE)
+        # Add RPATH to appropriate .dylibs directory
+        execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_INSTALL_RPATH}/.dylibs" ${PYTHON_EXT} ERROR_QUIET)
+        
+        # Get actual dependency paths and fix them
+        execute_process(COMMAND otool -L ${PYTHON_EXT} OUTPUT_VARIABLE OTOOL_OUT)
+        string(REPLACE "\n" ";" OTOOL_LINES "${OTOOL_OUT}")
+        
+        foreach(LINE ${OTOOL_LINES})
+            string(STRIP "${LINE}" LINE)
+            
+            # Check each required library
+            foreach(LIB_BASE ${REQUIRED_LIBS})
+                if(LINE MATCHES ".*${LIB_BASE}.*\\.${LIB_EXTENSION}.*" AND NOT LINE MATCHES "@.*path.*")
+                    string(REPLACE " (" ";" PARTS "${LINE}")
+                    list(GET PARTS 0 OLD_PATH)
+                    string(STRIP "${OLD_PATH}" OLD_PATH)
+                    string(REGEX REPLACE "^[\t ]+" "" OLD_PATH "${OLD_PATH}")
+                    message(STATUS "  Changing ${LIB_BASE} path: ${OLD_PATH} -> ${CMAKE_INSTALL_RPATH}/.dylibs/${LIB_BASE}.${LIB_EXTENSION}")
+                    execute_process(COMMAND install_name_tool -change "${OLD_PATH}" "${CMAKE_INSTALL_RPATH}/.dylibs/${LIB_BASE}.${LIB_EXTENSION}" ${PYTHON_EXT})
+                endif()
+            endforeach()
+        endforeach()
+    else()
+        # Linux RPATH fixing using chrpath
+        execute_process(COMMAND chrpath -r "${CMAKE_INSTALL_RPATH}/.dylibs" ${PYTHON_EXT})
+        message(STATUS "  Set RPATH to ${CMAKE_INSTALL_RPATH}/.dylibs for ${EXT_NAME}")
     endif()
 endforeach()
 
