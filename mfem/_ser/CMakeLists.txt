@@ -107,9 +107,6 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
         NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
     )
     
-    # Disable compiler warnings to focus on errors and ensure C++11 standard
-    # target_compile_options(${MODULE_NAME} PRIVATE -std=c++11)
-    
     # Debug: Show what include directories are being used for this target
     get_target_property(TARGET_INCLUDE_DIRS ${MODULE_NAME} INCLUDE_DIRECTORIES)
     message(VERBOSE "PyMFEM _ser ${MODULE_NAME}: Target include directories: ${TARGET_INCLUDE_DIRS}")
