@@ -463,6 +463,74 @@ function(build_hypre)
     message(STATUS "Built HYPRE")
 endfunction()
 
+# Function to build libCEED dependency
+function(build_libceed)
+    set(libceed_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/libceed)
+    set(libceed_install_dir ${EXT_PREFIX})
+    
+    # Check if libCEED is already built
+    if(EXISTS ${libceed_install_dir}/lib/libceed.a OR EXISTS ${libceed_install_dir}/lib/libceed.${LIB_EXTENSION})
+        message(STATUS "libCEED already built at ${libceed_install_dir}")
+        return()
+    endif()
+    
+    message(STATUS "Building libCEED at ${libceed_dir}")
+    message(STATUS "Installing libCEED at ${libceed_install_dir}")
+    
+    if(NOT EXISTS ${libceed_dir})
+        message(FATAL_ERROR "libCEED source not found at ${libceed_dir}")
+    endif()
+    
+    set(pwd ${CMAKE_CURRENT_SOURCE_DIR})
+    
+    # Clean any previous build
+    execute_process(
+        COMMAND make clean
+        WORKING_DIRECTORY ${libceed_dir}
+        RESULT_VARIABLE clean_result
+        ERROR_QUIET
+    )
+    
+    # Configure libCEED with CUDA if enabled
+    if(ENABLE_CUDA)
+        execute_process(
+            COMMAND make configure CUDA_DIR=${CUDA_PREFIX}
+            WORKING_DIRECTORY ${libceed_dir}
+            RESULT_VARIABLE config_result
+        )
+        
+        if(NOT config_result EQUAL "0")
+            message(FATAL_ERROR "Failed to configure libCEED with CUDA")
+        endif()
+    endif()
+    
+    # Build libCEED
+    execute_process(
+        COMMAND make -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        WORKING_DIRECTORY ${libceed_dir}
+        RESULT_VARIABLE build_result
+    )
+    
+    if(NOT build_result EQUAL "0")
+        message(FATAL_ERROR "Failed to build libCEED")
+    endif()
+    
+    # Install libCEED
+    execute_process(
+        COMMAND make install prefix=${libceed_install_dir}
+        WORKING_DIRECTORY ${libceed_dir}
+        RESULT_VARIABLE install_result
+    )
+    
+    if(install_result EQUAL "0")
+        message(STATUS "Successfully built and installed libCEED")
+    else()
+        message(FATAL_ERROR "Failed to install libCEED")
+    endif()
+    
+    message(STATUS "Built libCEED")
+endfunction()
+
 # Function to build MFEM using CMake
 function(build_mfem_serial)
     set(mfem_build_dir ${MFEM_SOURCE}/build)
@@ -479,24 +547,34 @@ function(build_mfem_serial)
     file(MAKE_DIRECTORY ${mfem_build_dir})
     
     # Configure MFEM with CMake (serial version matching legacy setup.py)
+    set(MFEM_SER_CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=Release
+        -DBUILD_SHARED_LIBS=ON
+        -DMFEM_ENABLE_EXAMPLES=OFF
+        -DMFEM_ENABLE_MINIAPPS=OFF
+        -DMFEM_USE_ZLIB=ON
+        -DMFEM_USE_MPI=OFF
+        -DMFEM_USE_EXCEPTIONS=ON
+        -DMFEM_THREAD_SAFE=ON
+        -DMFEM_USE_OPENMP=OFF
+        -DMFEM_USE_SUITESPARSE=OFF
+        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
+        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+        -DCMAKE_INSTALL_PREFIX=${mfem_build_dir}/install
+    )
+    
+    # Add libCEED support if enabled
+    if(BUILD_LIBCEED)
+        list(APPEND MFEM_SER_CMAKE_ARGS 
+            -DMFEM_USE_CEED=ON
+            -DCEED_DIR=${EXT_PREFIX}
+        )
+    endif()
+    
     execute_process(
-        COMMAND ${CMAKE_COMMAND} 
-            -DCMAKE_BUILD_TYPE=Release
-            -DBUILD_SHARED_LIBS=ON
-            -DMFEM_ENABLE_EXAMPLES=OFF
-            -DMFEM_ENABLE_MINIAPPS=OFF
-            -DMFEM_USE_ZLIB=ON
-            -DMFEM_USE_MPI=OFF
-            -DMFEM_USE_EXCEPTIONS=ON
-            -DMFEM_THREAD_SAFE=ON
-            -DMFEM_USE_OPENMP=OFF
-            -DMFEM_USE_SUITESPARSE=OFF
-            -DCMAKE_CXX_STANDARD=11
-            -DCMAKE_CXX_STANDARD_REQUIRED=ON
-            -DCMAKE_CXX_EXTENSIONS=OFF
-            -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
-            -DCMAKE_INSTALL_PREFIX=${mfem_build_dir}/install
-            ${MFEM_SOURCE}
+        COMMAND ${CMAKE_COMMAND} ${MFEM_SER_CMAKE_ARGS} ${MFEM_SOURCE}
         WORKING_DIRECTORY ${mfem_build_dir}
         RESULT_VARIABLE config_result
     )
@@ -580,6 +658,13 @@ function(build_mfem_parallel)
         -DMETIS_LIBRARIES=${METIS_LIB_PATH}
     )
     
+    # Add libCEED support if enabled
+    if(BUILD_LIBCEED)
+        list(APPEND MFEM_PAR_CMAKE_ARGS 
+            -DMFEM_USE_CEED=ON
+            -DCEED_DIR=${EXT_PREFIX}
+        )
+    endif()
     
     execute_process(
         COMMAND ${CMAKE_COMMAND} ${MFEM_PAR_CMAKE_ARGS} ${MFEM_SOURCE}
@@ -636,6 +721,7 @@ endif()
 
 if(BUILD_LIBCEED)
     download_external_tarball(libceed ${LIBCEED_URL})
+    build_libceed()
 endif()
 
 if(BUILD_GSLIB)

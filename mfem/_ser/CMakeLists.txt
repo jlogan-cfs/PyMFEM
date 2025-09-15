@@ -63,6 +63,11 @@ message(STATUS "PyMFEM _ser: Python sysconfig include path: ${PYTHON_SYSCONFIG_I
 
 include_directories(${NUMPY_INCLUDE_DIR})
 
+# Add libCEED include directory if enabled
+if(BUILD_LIBCEED)
+    include_directories(${EXT_PREFIX}/include)
+endif()
+
 # Create SWIG modules for each interface
 foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     get_filename_component(MODULE_NAME ${SWIG_INTERFACE} NAME_WE)
@@ -74,7 +79,14 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     set_property(SOURCE ${SWIG_INTERFACE} PROPERTY CPLUSPLUS ON)
     
     # Add SWIG include directories for this interface
-    set_property(SOURCE ${SWIG_INTERFACE} PROPERTY SWIG_FLAGS "-I${SWIG_LIB_DIR}/python")
+    set(SWIG_INCLUDE_FLAGS "-I${SWIG_LIB_DIR}/python")
+    
+    # Add libCEED include directory if enabled
+    if(BUILD_LIBCEED)
+        list(APPEND SWIG_INCLUDE_FLAGS "-I${EXT_PREFIX}/include")
+    endif()
+    
+    set_property(SOURCE ${SWIG_INTERFACE} PROPERTY SWIG_FLAGS ${SWIG_INCLUDE_FLAGS})
     
     message(VERBOSE "PyMFEM _ser: Creating SWIG library for ${MODULE_NAME}")
     message(VERBOSE "PyMFEM _ser: SWIG interface source: ${SWIG_INTERFACE}")
@@ -130,7 +142,14 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     # We'll update the relative path for linking after install
     set(MFEM_LIB "${MFEM_SOURCE}/build/install/lib/libmfem.${LIB_EXTENSION}")
 
-    target_link_libraries(${MODULE_NAME} Python::Module ${MFEM_LIB})
+    set(SER_LINK_LIBS Python::Module ${MFEM_LIB})
+    
+    # Add libCEED library if enabled
+    if(BUILD_LIBCEED)
+        list(APPEND SER_LINK_LIBS "${EXT_PREFIX}/lib/libceed.${LIB_EXTENSION}")
+    endif()
+
+    target_link_libraries(${MODULE_NAME} ${SER_LINK_LIBS})
     
     # Install the compiled module
     install(TARGETS ${MODULE_NAME} LIBRARY DESTINATION mfem/_ser)
@@ -178,6 +197,11 @@ install(DIRECTORY "${MFEM_SOURCE}/build/install/lib/"
         FILES_MATCHING PATTERN "libmfem.*"
         PATTERN "cmake" EXCLUDE)
 
+# Install libCEED library if enabled
+if(BUILD_LIBCEED)
+    set(LIBCEED_LIB_INSTALL "${EXT_PREFIX}/lib/libceed.${LIB_EXTENSION}")
+    install(FILES ${LIBCEED_LIB_INSTALL} DESTINATION mfem/_ser/.dylibs OPTIONAL)
+endif()
 
 # Fix RPATH for MFEM libraries and Python extensions using external script
 install(CODE "

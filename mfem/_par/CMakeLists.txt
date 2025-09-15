@@ -153,13 +153,20 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     set(HYPRE_LIB "${EXT_PREFIX}/lib/libHYPRE.${LIB_EXTENSION}") 
     set(METIS_LIB "${EXT_PREFIX}/lib/libmetis.${LIB_EXTENSION}")
     
-    target_link_libraries(${MODULE_NAME}_par 
+    set(PAR_LINK_LIBS
         Python::Module 
         ${MPI_CXX_LIBRARIES}
         ${MFEM_LIB}
         ${HYPRE_LIB}
         ${METIS_LIB}
     )
+    
+    # Add libCEED library if enabled
+    if(BUILD_LIBCEED)
+        list(APPEND PAR_LINK_LIBS "${EXT_PREFIX}/lib/libceed.${LIB_EXTENSION}")
+    endif()
+    
+    target_link_libraries(${MODULE_NAME}_par ${PAR_LINK_LIBS})
     
     # Install the module
     install(TARGETS ${MODULE_NAME}_par  LIBRARY DESTINATION mfem/_par)
@@ -217,13 +224,7 @@ target_compile_definitions(${MODULE_NAME}_par PRIVATE
 )
 
 # Link libraries
-target_link_libraries(${MODULE_NAME}_par 
-    Python::Module 
-    ${MPI_CXX_LIBRARIES}
-    ${MFEM_LIB}
-    ${HYPRE_LIB}
-    ${METIS_LIB}
-)
+target_link_libraries(${MODULE_NAME}_par ${PAR_LINK_LIBS})
 
 
 # Install the module and Python wrapper
@@ -283,13 +284,7 @@ target_compile_definitions(${MODULE_NAME}_par PRIVATE
 )
 
 # Link libraries
-target_link_libraries(${MODULE_NAME}_par 
-    Python::Module 
-    ${MPI_CXX_LIBRARIES}
-    ${MFEM_LIB}
-    ${HYPRE_LIB}
-    ${METIS_LIB}
-)
+target_link_libraries(${MODULE_NAME}_par ${PAR_LINK_LIBS})
 
 # Install the module and Python wrapper
 install(TARGETS ${MODULE_NAME}_par LIBRARY DESTINATION mfem/_par)
@@ -321,6 +316,12 @@ install(DIRECTORY "${MFEM_SOURCE}/build_par/install/lib/"
         PATTERN "cmake" EXCLUDE)
 install(FILES ${HYPRE_LIB_INSTALL} DESTINATION mfem/_par/.dylibs OPTIONAL)  
 install(FILES ${METIS_LIB_INSTALL} DESTINATION mfem/_par/.dylibs OPTIONAL)
+
+# Install libCEED library if enabled
+if(BUILD_LIBCEED)
+    set(LIBCEED_LIB_INSTALL "${EXT_PREFIX}/lib/libceed.${LIB_EXTENSION}")
+    install(FILES ${LIBCEED_LIB_INSTALL} DESTINATION mfem/_par/.dylibs OPTIONAL)
+endif()
 
 # Fix RPATH for MFEM libraries and Python extensions using external script  
 install(CODE "

@@ -154,9 +154,17 @@ foreach(PYTHON_EXT ${ALL_PYTHON_EXTS})
     
     # Determine if this is a serial or parallel extension to set appropriate library list
     if(PYTHON_EXT MATCHES ".*/mfem/_ser/.*")
-        set(REQUIRED_LIBS "libmfem")  # Serial only needs MFEM
+        set(REQUIRED_LIBS "libmfem")  # Serial primarily needs MFEM
+        # Add libCEED if it exists (conditional support)
+        if(EXISTS "${CMAKE_INSTALL_PREFIX}/mfem/_ser/.dylibs/libceed.${LIB_EXTENSION}")
+            list(APPEND REQUIRED_LIBS "libceed")
+        endif()
     else()
-        set(REQUIRED_LIBS "libmfem" "libHYPRE" "libmetis")  # Parallel needs all three
+        set(REQUIRED_LIBS "libmfem" "libHYPRE" "libmetis")  # Parallel needs MFEM, HYPRE, METIS
+        # Add libCEED if it exists (conditional support)
+        if(EXISTS "${CMAKE_INSTALL_PREFIX}/mfem/_par/.dylibs/libceed.${LIB_EXTENSION}")
+            list(APPEND REQUIRED_LIBS "libceed")
+        endif()
     endif()
     
     if(APPLE)

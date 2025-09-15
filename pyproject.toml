@@ -102,9 +102,9 @@ CMAKE_CXX_EXTENSIONS = "OFF"
 
 # Build options (can be overridden)
 BUILD_PARALLEL = {env = "PYMFEM_BUILD_PARALLEL", default = "ON"}
-BUILD_METIS = {env = "PYMFEM_BUILD_METIS", default = "OFF"}
-BUILD_HYPRE = {env = "PYMFEM_BUILD_HYPRE", default = "OFF"}
-BUILD_LIBCEED = {env = "PYMFEM_BUILD_LIBCEED", default = "OFF"}
+BUILD_METIS = {env = "PYMFEM_BUILD_METIS", default = "ON"}
+BUILD_HYPRE = {env = "PYMFEM_BUILD_HYPRE", default = "ON"}
+BUILD_LIBCEED = {env = "PYMFEM_BUILD_LIBCEED", default = "ON"}
 BUILD_GSLIB = {env = "PYMFEM_BUILD_GSLIB", default = "OFF"}
 ENABLE_CUDA = {env = "PYMFEM_ENABLE_CUDA", default = "OFF"}
 ENABLE_SUITESPARSE = {env = "PYMFEM_ENABLE_SUITESPARSE", default = "OFF"}
