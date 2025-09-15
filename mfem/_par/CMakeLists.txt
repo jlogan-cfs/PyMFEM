@@ -327,5 +327,5 @@ endif()
 install(CODE "
     set(LIB_EXTENSION \"${LIB_EXTENSION}\")
     set(CMAKE_INSTALL_RPATH \"${CMAKE_INSTALL_RPATH}\")
-    include(${CMAKE_CURRENT_SOURCE_DIR}/../../fix_rpath.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/fix_rpath.cmake)
 ")

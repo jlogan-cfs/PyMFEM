@@ -165,7 +165,7 @@ add_custom_command(TARGET lininteg POST_BUILD
     COMMAND ${Python_EXECUTABLE} generate_lininteg_ext.py
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_ser/lininteg.py
     # Fix imports in generated lininteg.py to use _ser instead of _par
-    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../fix_ser_imports.py ${CMAKE_BINARY_DIR}/lininteg.py
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/fix_ser_imports.py ${CMAKE_BINARY_DIR}/lininteg.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../common
     COMMENT "Generating lininteg extensions"
 )
@@ -175,7 +175,7 @@ add_custom_command(TARGET bilininteg POST_BUILD
     COMMAND ${Python_EXECUTABLE} generate_bilininteg_ext.py
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_SOURCE_DIR}/../common/../_ser/bilininteg.py
     # Fix imports in generated bilininteg.py to use _ser instead of _par
-    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../fix_ser_imports.py ${CMAKE_BINARY_DIR}/bilininteg.py
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/fix_ser_imports.py ${CMAKE_BINARY_DIR}/bilininteg.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../common
     COMMENT "Generating bilininteg extensions"
 )
@@ -207,5 +207,5 @@ endif()
 install(CODE "
     set(LIB_EXTENSION \"${LIB_EXTENSION}\")
     set(CMAKE_INSTALL_RPATH \"${CMAKE_INSTALL_RPATH}\")
-    include(${CMAKE_CURRENT_SOURCE_DIR}/../../fix_rpath.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/fix_rpath.cmake)
 ")
