@@ -261,275 +261,8 @@ function(download_external_tarball name url)
     endif()
 endfunction()
 
-# Function to build METIS dependency
-function(build_metis)
-    set(metis_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/metis)
-    set(metis_build_dir ${metis_dir}/build)
-    set(metis_install_dir ${EXT_PREFIX})
-    
-    # Check if METIS is already built
-    if(EXISTS ${metis_install_dir}/lib/libmetis.a OR EXISTS ${metis_install_dir}/lib/libmetis.so OR EXISTS ${metis_install_dir}/lib/libmetis.dylib)
-        message(STATUS "METIS already built at ${metis_install_dir}")
-        return()
-    endif()
-    
-    message(STATUS "Building METIS at ${metis_dir}")
-    message(STATUS "METIS will be installed to: ${metis_install_dir}")
-    
-    if(NOT EXISTS ${metis_dir})
-        message(FATAL_ERROR "METIS source not found at ${metis_dir}")
-    endif()
-    
-    # Ensure install directories exist
-    file(MAKE_DIRECTORY ${metis_install_dir})
-    file(MAKE_DIRECTORY ${metis_install_dir}/lib)
-    file(MAKE_DIRECTORY ${metis_install_dir}/include)
-    
-    # Create build directory  
-    file(MAKE_DIRECTORY ${metis_build_dir})
-    
-    # Configure METIS build (matching setup_legacy.py configuration)
-    # Force cmake to use Unix Makefiles generator (not Ninja) since METIS expects Makefile
-    set(ENV{CMAKE_GENERATOR} "Unix Makefiles")
-    # Extract base compiler command without flags for METIS config
-    string(REGEX REPLACE " .*" "" BASE_CC_COMMAND "${CC_COMMAND}")
-    if(NOT BASE_CC_COMMAND)
-        set(BASE_CC_COMMAND "${CC_COMMAND}")
-    endif()
-    
-    message(STATUS "Configuring METIS with: make config shared=1 prefix=${metis_install_dir} cc=${BASE_CC_COMMAND} CMAKE_POLICY_VERSION_MINIMUM=4.0")
-    execute_process(
-        COMMAND make config shared=1 prefix=${metis_install_dir} cc=${BASE_CC_COMMAND} CMAKE_POLICY_VERSION_MINIMUM=4.0
-        WORKING_DIRECTORY ${metis_dir}
-        RESULT_VARIABLE config_result
-        OUTPUT_VARIABLE config_output
-        ERROR_VARIABLE config_error
-    )
-    
-    message(STATUS "METIS config result: ${config_result}")
-    if(config_output)
-        message(STATUS "METIS config output: ${config_output}")
-    endif()
-    if(config_error)
-        message(STATUS "METIS config error: ${config_error}")
-    endif()
-    
-    # Check if build directory and Makefile were created by config
-    file(GLOB metis_build_dirs "${metis_dir}/build/*")
-    if(metis_build_dirs)
-        list(GET metis_build_dirs 0 actual_build_dir)
-        message(STATUS "METIS build directory created: ${actual_build_dir}")
-        
-        if(EXISTS "${actual_build_dir}/Makefile")
-            message(STATUS "METIS build Makefile exists - config succeeded")
-        else()
-            message(STATUS "METIS build Makefile MISSING - config failed")
-            # List what files are in the build directory
-            file(GLOB build_contents "${actual_build_dir}/*")
-            message(STATUS "Contents of build directory: ${build_contents}")
-        endif()
-    else()
-        message(STATUS "No METIS build directory created - config completely failed")
-    endif()
-    
-    if(NOT config_result EQUAL "0")
-        message(FATAL_ERROR "Failed to configure METIS")
-    endif()
-    
-    # Build METIS
-    if(CMAKE_BUILD_PARALLEL_LEVEL)
-        set(make_jobs "-j${CMAKE_BUILD_PARALLEL_LEVEL}")
-    else()
-        set(make_jobs "-j4")  # Default to 4 parallel jobs
-    endif()
-    
-    message(STATUS "Building METIS with: make all ${make_jobs}")
-    execute_process(
-        COMMAND make all ${make_jobs}
-        WORKING_DIRECTORY ${metis_dir}
-        RESULT_VARIABLE build_result
-        OUTPUT_VARIABLE build_output
-        ERROR_VARIABLE build_error
-    )
-    
-    message(STATUS "METIS build result: ${build_result}")
-    if(build_output)
-        message(STATUS "METIS build output: ${build_output}")
-    endif()
-    if(build_error)
-        message(STATUS "METIS build error: ${build_error}")
-    endif()
-    
-    if(NOT build_result EQUAL "0")
-        message(FATAL_ERROR "Failed to build METIS")
-    endif()
-    
-    # Install METIS
-    message(STATUS "Installing METIS with: make install")
-    execute_process(
-        COMMAND make install
-        WORKING_DIRECTORY ${metis_dir}
-        RESULT_VARIABLE install_result
-        OUTPUT_VARIABLE install_output
-        ERROR_VARIABLE install_error
-    )
-    
-    if(install_error)
-        message(STATUS "METIS install error: ${install_error}")
-    endif()
-    
-endfunction()
 
-# Function to build HYPRE dependency  
-function(build_hypre)
-    set(hypre_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/hypre)
-    set(hypre_build_dir ${hypre_dir}/src/cmbuild)
-    set(hypre_install_dir ${EXT_PREFIX})
-    
-    # Check if HYPRE is already built
-    if(EXISTS ${hypre_install_dir}/lib/libHYPRE.a OR EXISTS ${hypre_install_dir}/lib/libHYPRE.so OR EXISTS ${hypre_install_dir}/lib/libHYPRE.dylib)
-        message(STATUS "HYPRE already built at ${hypre_install_dir}")
-        return()
-    endif()
-    
-    message(STATUS "Building HYPRE at ${hypre_dir}")
-    message(STATUS "Installing HYPRE at ${hypre_install_dir}")
-    
-    if(NOT EXISTS ${hypre_dir})
-        message(FATAL_ERROR "HYPRE source not found at ${hypre_dir}")
-    endif()
-    
-    # Create build directory
-    file(MAKE_DIRECTORY ${hypre_build_dir})
-    
-    # Configure HYPRE with CMake (matching setup_legacy.py configuration)
-    set(HYPRE_CMAKE_ARGS
-        -DCMAKE_BUILD_TYPE=Release
-        -DBUILD_SHARED_LIBS=ON
-        -DHYPRE_INSTALL_PREFIX=${hypre_install_dir}
-        -DHYPRE_ENABLE_SHARED=ON
-        -DCMAKE_C_FLAGS=-fPIC
-        -DCMAKE_INSTALL_PREFIX=${hypre_install_dir}
-        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
-    )
-    
-    if(APPLE)
-        list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_INSTALL_NAME_DIR=${hypre_install_dir}/lib)
-    endif()
-    
-    if(ENABLE_CUDA)
-        list(APPEND HYPRE_CMAKE_ARGS -DHYPRE_WITH_CUDA=ON)
-        if(CUDA_ARCH)
-            list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH})
-        endif()
-    else()
-        list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_C_COMPILER=${MPICC_COMMAND})
-    endif()
-    
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} ${HYPRE_CMAKE_ARGS} ..
-        WORKING_DIRECTORY ${hypre_build_dir}
-        RESULT_VARIABLE config_result
-    )
-    
-    if(NOT config_result EQUAL "0")
-        message(FATAL_ERROR "Failed to configure HYPRE")
-    endif()
-    
-    # Build HYPRE
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} --build . --parallel
-        WORKING_DIRECTORY ${hypre_build_dir}
-        RESULT_VARIABLE build_result
-    )
-    
-    if(NOT build_result EQUAL "0")
-        message(FATAL_ERROR "Failed to build HYPRE")
-    endif()
-    
-    # Install HYPRE
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} --build . --target install
-        WORKING_DIRECTORY ${hypre_build_dir}
-        RESULT_VARIABLE install_result
-    )
-    
-    if(install_result EQUAL "0")
-        message(STATUS "Successfully built and installed HYPRE")
-    else()
-        message(FATAL_ERROR "Failed to install HYPRE")
-    endif()
 
-    message(STATUS "Built HYPRE")
-endfunction()
-
-# Function to build libCEED dependency
-function(build_libceed)
-    set(libceed_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/libceed)
-    set(libceed_install_dir ${EXT_PREFIX})
-    
-    # Check if libCEED is already built
-    if(EXISTS ${libceed_install_dir}/lib/libceed.a OR EXISTS ${libceed_install_dir}/lib/libceed.${LIB_EXTENSION})
-        message(STATUS "libCEED already built at ${libceed_install_dir}")
-        return()
-    endif()
-    
-    message(STATUS "Building libCEED at ${libceed_dir}")
-    message(STATUS "Installing libCEED at ${libceed_install_dir}")
-    
-    if(NOT EXISTS ${libceed_dir})
-        message(FATAL_ERROR "libCEED source not found at ${libceed_dir}")
-    endif()
-    
-    set(pwd ${CMAKE_CURRENT_SOURCE_DIR})
-    
-    # Clean any previous build
-    execute_process(
-        COMMAND make clean
-        WORKING_DIRECTORY ${libceed_dir}
-        RESULT_VARIABLE clean_result
-        ERROR_QUIET
-    )
-    
-    # Configure libCEED with CUDA if enabled
-    if(ENABLE_CUDA)
-        execute_process(
-            COMMAND make configure CUDA_DIR=${CUDA_PREFIX}
-            WORKING_DIRECTORY ${libceed_dir}
-            RESULT_VARIABLE config_result
-        )
-        
-        if(NOT config_result EQUAL "0")
-            message(FATAL_ERROR "Failed to configure libCEED with CUDA")
-        endif()
-    endif()
-    
-    # Build libCEED
-    execute_process(
-        COMMAND make -j${CMAKE_BUILD_PARALLEL_LEVEL}
-        WORKING_DIRECTORY ${libceed_dir}
-        RESULT_VARIABLE build_result
-    )
-    
-    if(NOT build_result EQUAL "0")
-        message(FATAL_ERROR "Failed to build libCEED")
-    endif()
-    
-    # Install libCEED
-    execute_process(
-        COMMAND make install prefix=${libceed_install_dir}
-        WORKING_DIRECTORY ${libceed_dir}
-        RESULT_VARIABLE install_result
-    )
-    
-    if(install_result EQUAL "0")
-        message(STATUS "Successfully built and installed libCEED")
-    else()
-        message(FATAL_ERROR "Failed to install libCEED")
-    endif()
-    
-    message(STATUS "Built libCEED")
-endfunction()
 
 # Function to build MFEM using CMake
 function(build_mfem_serial)
@@ -711,17 +444,58 @@ endfunction()
 # Download and build dependencies in order based on options
 if(BUILD_PARALLEL OR BUILD_METIS)
     download_external_tarball(metis ${METIS_URL})
-    build_metis()
+    execute_process(
+        COMMAND ${CMAKE_COMMAND}
+            -DMETIS_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/external/metis
+            -DMETIS_INSTALL_DIR=${EXT_PREFIX}
+            -DMETIS_CC_COMMAND=${CC_COMMAND}
+            -DCMAKE_BUILD_PARALLEL_LEVEL=${CMAKE_BUILD_PARALLEL_LEVEL}
+            -DLIB_EXTENSION=${LIB_EXTENSION}
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build_metis.cmake
+        RESULT_VARIABLE metis_result
+    )
+    if(NOT metis_result EQUAL "0")
+        message(FATAL_ERROR "Failed to build METIS")
+    endif()
 endif()
 
 if(BUILD_PARALLEL OR BUILD_HYPRE)
-    download_external_tarball(hypre ${HYPRE_URL})  
-    build_hypre()
+    download_external_tarball(hypre ${HYPRE_URL})
+    execute_process(
+        COMMAND ${CMAKE_COMMAND}
+            -DHYPRE_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/external/hypre
+            -DHYPRE_INSTALL_DIR=${EXT_PREFIX}
+            -DMPICC_COMMAND=${MPICC_COMMAND}
+            -DCMAKE_BUILD_PARALLEL_LEVEL=${CMAKE_BUILD_PARALLEL_LEVEL}
+            -DLIB_EXTENSION=${LIB_EXTENSION}
+            -DENABLE_CUDA=${ENABLE_CUDA}
+            -DCUDA_PREFIX=${CUDA_PREFIX}
+            -DCUDA_ARCH=${CUDA_ARCH}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build_hypre.cmake
+        RESULT_VARIABLE hypre_result
+    )
+    if(NOT hypre_result EQUAL "0")
+        message(FATAL_ERROR "Failed to build HYPRE")
+    endif()
 endif()
 
 if(BUILD_LIBCEED)
     download_external_tarball(libceed ${LIBCEED_URL})
-    build_libceed()
+    execute_process(
+        COMMAND ${CMAKE_COMMAND}
+            -DLIBCEED_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/external/libceed
+            -DLIBCEED_INSTALL_DIR=${EXT_PREFIX}
+            -DCMAKE_BUILD_PARALLEL_LEVEL=${CMAKE_BUILD_PARALLEL_LEVEL}
+            -DLIB_EXTENSION=${LIB_EXTENSION}
+            -DENABLE_CUDA=${ENABLE_CUDA}
+            -DCUDA_PREFIX=${CUDA_PREFIX}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build_libceed.cmake
+        RESULT_VARIABLE libceed_result
+    )
+    if(NOT libceed_result EQUAL "0")
+        message(FATAL_ERROR "Failed to build libCEED")
+    endif()
 endif()
 
 if(BUILD_GSLIB)
