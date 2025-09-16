@@ -171,7 +171,7 @@ endfunction()
 set(MFEM_GIT_URL "https://github.com/mfem/mfem.git")
 set(MFEM_GIT_SHA "dc9128ef596e84daf1138aa3046b826bba9d259f")  # v4.7
 
-set(HYPRE_URL "https://github.com/hypre-space/hypre/archive/v2.28.0.tar.gz")
+set(HYPRE_URL "https://github.com/hypre-space/hypre/archive/v2.33.0.tar.gz")
 set(METIS_URL "https://github.com/mfem/tpls/raw/gh-pages/metis-5.1.0.tar.gz")
 set(LIBCEED_URL "https://github.com/CEED/libCEED/archive/refs/tags/v0.12.0.tar.gz")
 set(GSLIB_URL "https://github.com/Nek5000/gslib/archive/refs/tags/v1.0.8.tar.gz")
