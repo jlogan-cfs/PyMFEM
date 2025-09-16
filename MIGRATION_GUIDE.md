@@ -25,18 +25,18 @@ Configuration is now done via environment variables or `pyproject.toml` settings
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PYMFEM_BUILD_PARALLEL` | Build parallel version | `OFF` |
-| `PYMFEM_BUILD_METIS` | Build METIS library | `OFF` |
-| `PYMFEM_BUILD_HYPRE` | Build HYPRE library | `OFF` |
-| `PYMFEM_BUILD_LIBCEED` | Build libCEED library | `OFF` |
-| `PYMFEM_BUILD_GSLIB` | Build gslib library | `OFF` |
+| `PYMFEM_BUILD_PARALLEL` | Build parallel version | `ON` |
+| `PYMFEM_BUILD_METIS` | Build METIS library | `ON` |
+| `PYMFEM_BUILD_HYPRE` | Build HYPRE library | `ON` |
+| `PYMFEM_BUILD_LIBCEED` | Build libCEED library | `ON` |
+| `PYMFEM_BUILD_GSLIB` | Build gslib library | `ON` |
 | `PYMFEM_ENABLE_CUDA` | Enable CUDA support | `OFF` |
-| `PYMFEM_CUDA_ARCH` | CUDA compute capability | `75,80,86` |
+| `PYMFEM_CUDA_ARCH` | CUDA compute capability | `75;80;86` |
 | `PYMFEM_CUDA_PREFIX` | CUDA installation path | `/usr/local/cuda` |
 | `PYMFEM_ENABLE_SUITESPARSE` | Enable SuiteSparse | `OFF` |
-| `PYMFEM_ENABLE_LAPACK` | Enable LAPACK | `OFF` |
+| `PYMFEM_ENABLE_LAPACK` | Enable LAPACK | `ON` |
 | `PYMFEM_MFEM_SOURCE` | MFEM source directory | `./external/mfem` |
-| `PYMFEM_EXT_PREFIX` | External libraries prefix | `` |
+| `PYMFEM_EXT_PREFIX` | External libraries prefix | `external` |
 
 ### Examples
 
@@ -48,7 +48,7 @@ PYMFEM_BUILD_PARALLEL=ON pip install .
 PYMFEM_ENABLE_CUDA=ON pip install . --no-build-isolation
 
 # Build with specific CUDA architecture (e.g., RTX 30-series = 86)
-PYMFEM_ENABLE_CUDA=ON PYMFEM_CUDA_ARCH=86 pip install . --no-build-isolation
+PYMFEM_ENABLE_CUDA=ON PYMFEM_CUDA_ARCH="75;80;86" pip install . --no-build-isolation
 
 # Build with external dependencies
 PYMFEM_BUILD_METIS=ON PYMFEM_BUILD_HYPRE=ON pip install .
