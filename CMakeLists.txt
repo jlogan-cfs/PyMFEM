@@ -72,6 +72,8 @@ option(ENABLE_LAPACK "Enable LAPACK" OFF)
 option(ENABLE_PUMI "Enable PUMI" OFF)
 option(ENABLE_STRUMPACK "Enable STRUMPACK" OFF)
 
+# LAPACK will be auto-detected from system or built from source if ENABLE_LAPACK is ON
+
 # Path configurations
 # If EXT_PREFIX is empty or not set, use a default location
 if(NOT EXT_PREFIX OR EXT_PREFIX STREQUAL "")
@@ -171,6 +173,7 @@ set(HYPRE_URL "https://github.com/hypre-space/hypre/archive/v2.28.0.tar.gz")
 set(METIS_URL "https://github.com/mfem/tpls/raw/gh-pages/metis-5.1.0.tar.gz")
 set(LIBCEED_URL "https://github.com/CEED/libCEED/archive/refs/tags/v0.12.0.tar.gz")
 set(GSLIB_URL "https://github.com/Nek5000/gslib/archive/refs/tags/v1.0.8.tar.gz")
+set(LAPACK_URL "https://github.com/Reference-LAPACK/lapack/archive/v3.12.1.tar.gz")
 
 # Function to download MFEM via git clone
 function(download_mfem)
@@ -308,6 +311,11 @@ function(build_mfem_serial)
     
     # GSLIB is not supported in serial builds (requires MPI)
     
+    # Add LAPACK support if enabled (use system libraries)
+    if(ENABLE_LAPACK)
+        list(APPEND MFEM_SER_CMAKE_ARGS -DMFEM_USE_LAPACK=ON)
+    endif()
+    
     execute_process(
         COMMAND ${CMAKE_COMMAND} ${MFEM_SER_CMAKE_ARGS} ${MFEM_SOURCE}
         WORKING_DIRECTORY ${mfem_build_dir}
@@ -409,6 +417,11 @@ function(build_mfem_parallel)
             -DGSLIB_INCLUDE_DIRS=${EXT_PREFIX}/include
             -DGSLIB_LIBRARIES=${EXT_PREFIX}/lib/libgs.a
         )
+    endif()
+    
+    # Add LAPACK support if enabled (use system libraries)
+    if(ENABLE_LAPACK)
+        list(APPEND MFEM_PAR_CMAKE_ARGS -DMFEM_USE_LAPACK=ON)
     endif()
     
     execute_process(
@@ -525,6 +538,11 @@ if(BUILD_GSLIB AND BUILD_PARALLEL)
     if(NOT gslib_result EQUAL "0")
         message(FATAL_ERROR "Failed to build GSLIB")
     endif()
+endif()
+
+# LAPACK/BLAS: Let MFEM use system libraries (Apple Accelerate, OpenBLAS, MKL, etc.)
+if(ENABLE_LAPACK)
+    message(STATUS "LAPACK enabled - MFEM will use system LAPACK/BLAS libraries")
 endif()
 
 # Download and build MFEM (always needed - serial first)

@@ -159,12 +159,14 @@ foreach(PYTHON_EXT ${ALL_PYTHON_EXTS})
         if(EXISTS "${CMAKE_INSTALL_PREFIX}/mfem/_ser/.dylibs/libceed.${LIB_EXTENSION}")
             list(APPEND REQUIRED_LIBS "libceed")
         endif()
+        # LAPACK/BLAS: Using system libraries, no bundled libraries to fix
     else()
         set(REQUIRED_LIBS "libmfem" "libHYPRE" "libmetis")  # Parallel needs MFEM, HYPRE, METIS
         # Add libCEED if it exists (conditional support)
         if(EXISTS "${CMAKE_INSTALL_PREFIX}/mfem/_par/.dylibs/libceed.${LIB_EXTENSION}")
             list(APPEND REQUIRED_LIBS "libceed")
         endif()
+        # LAPACK/BLAS: Using system libraries, no bundled libraries to fix
     endif()
     
     if(APPLE)

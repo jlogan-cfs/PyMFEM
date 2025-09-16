@@ -203,6 +203,8 @@ if(BUILD_LIBCEED)
     install(FILES ${LIBCEED_LIB_INSTALL} DESTINATION mfem/_ser/.dylibs OPTIONAL)
 endif()
 
+# LAPACK/BLAS: Using system libraries, no installation needed
+
 # Fix RPATH for MFEM libraries and Python extensions using external script
 install(CODE "
     set(LIB_EXTENSION \"${LIB_EXTENSION}\")
