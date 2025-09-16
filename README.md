@@ -10,9 +10,30 @@ By default, "pip install mfem" downloads and builds the serial version of MFEM a
 Additionally, the installer supports building MFEM with specific options together with other external libraries, including MPI version.
 
 ## Install
-```shell
-pip install mfem                    # binary install is available only on linux platforms (Py36-310)
 
+### System Dependencies
+PyMFEM requires the following system libraries to be installed:
+
+**Ubuntu/Debian:**
+```shell
+sudo apt-get install libopenblas-dev liblapack-dev libopenmpi-dev
+```
+
+**macOS:**
+```shell
+brew install openmpi
+# BLAS/LAPACK are provided by Apple Accelerate framework (already installed)
+```
+
+**CentOS/RHEL/Fedora:**
+```shell
+sudo yum install openblas-devel lapack-devel mpich-devel
+# or: sudo dnf install openblas-devel lapack-devel mpich-devel
+```
+
+### Install PyMFEM
+```shell
+pip install mfem  # binary install is available on linux and mac platforms
 ```
 
 ## Build with additional features (MPI, GPU, GPU-Hypre, GSLIB, SuiteSparse, libCEED, LAPACK)
