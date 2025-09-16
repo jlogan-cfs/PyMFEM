@@ -67,6 +67,13 @@ option(BUILD_HYPRE "Build HYPRE library" OFF)
 option(BUILD_LIBCEED "Build libCEED library" OFF)
 option(BUILD_GSLIB "Build gslib library" OFF)
 option(ENABLE_CUDA "Enable CUDA support" OFF)
+
+# Set CUDA compiler flags for compatibility with newer GCC versions
+if(ENABLE_CUDA)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --allow-unsupported-compiler")
+    set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+endif()
+
 option(ENABLE_SUITESPARSE "Enable SuiteSparse" OFF)
 option(ENABLE_LAPACK "Enable LAPACK" OFF)
 option(ENABLE_PUMI "Enable PUMI" OFF)
