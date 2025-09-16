@@ -64,7 +64,6 @@ cmake.args = [
   "-DCMAKE_EXE_LINKER_FLAGS=-std=c++11",
   "-DCMAKE_SHARED_LINKER_FLAGS=-std=c++11",
   "-DCMAKE_POLICY_VERSION_MINIMUM=4.0",
-  "-DCMAKE_CUDA_FLAGS=-allow-unsupported-compiler",
 ]
 
 # Build configuration for wheels
