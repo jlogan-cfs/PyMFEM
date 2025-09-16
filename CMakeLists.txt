@@ -237,23 +237,39 @@ function(download_external_tarball name url)
             message(FATAL_ERROR "Failed to download ${name} from ${url}")
         endif()
         
-        # Extract tarball
+        # Extract tarball to temporary location and move contents
+        set(temp_extract_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/temp_${name})
+        file(MAKE_DIRECTORY ${temp_extract_dir})
+
         execute_process(
             COMMAND ${CMAKE_COMMAND} -E tar xzf ${tarball_path}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external
+            WORKING_DIRECTORY ${temp_extract_dir}
             RESULT_VARIABLE extract_result
         )
-        
+
         if(NOT extract_result EQUAL 0)
             message(FATAL_ERROR "Failed to extract ${tarball_name}")
         endif()
-        
-        # Rename extracted directory to expected name (remove version suffix)
-        file(GLOB extracted_dirs "${CMAKE_CURRENT_SOURCE_DIR}/external/${name}-*")
-        if(extracted_dirs)
-            list(GET extracted_dirs 0 extracted_dir)
-            file(RENAME ${extracted_dir} ${external_dir})
+
+        # Find the extracted directory and move its contents to the target location
+        file(GLOB extracted_items "${temp_extract_dir}/*")
+        if(extracted_items)
+            list(GET extracted_items 0 extracted_dir)
+            if(IS_DIRECTORY ${extracted_dir})
+                file(RENAME ${extracted_dir} ${external_dir})
+            else()
+                # If multiple items, move them all to target directory
+                file(MAKE_DIRECTORY ${external_dir})
+                file(GLOB all_items "${temp_extract_dir}/*")
+                foreach(item ${all_items})
+                    get_filename_component(item_name ${item} NAME)
+                    file(RENAME ${item} ${external_dir}/${item_name})
+                endforeach()
+            endif()
         endif()
+
+        # Clean up temporary directory
+        file(REMOVE_RECURSE ${temp_extract_dir})
         
         # Clean up tarball
         file(REMOVE ${tarball_path})
