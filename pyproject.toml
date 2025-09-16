@@ -107,12 +107,16 @@ BUILD_HYPRE = {env = "PYMFEM_BUILD_HYPRE", default = "ON"}
 BUILD_LIBCEED = {env = "PYMFEM_BUILD_LIBCEED", default = "ON"}
 BUILD_GSLIB = {env = "PYMFEM_BUILD_GSLIB", default = "ON"}
 ENABLE_CUDA = {env = "PYMFEM_ENABLE_CUDA", default = "OFF"}
-ENABLE_SUITESPARSE = {env = "PYMFEM_ENABLE_SUITESPARSE", default = "OFF"}
+# ENABLE_SUITESPARSE = {env = "PYMFEM_ENABLE_SUITESPARSE", default = "OFF"}  # Not supported yet
 ENABLE_LAPACK = {env = "PYMFEM_ENABLE_LAPACK", default = "ON"}
 
 # Path configurations
 MFEM_SOURCE = {env = "PYMFEM_MFEM_SOURCE", default = "./external/mfem"}
 EXT_PREFIX = {env = "PYMFEM_EXT_PREFIX", default = "external"}
+
+# CUDA configurations (for local builds only)
+CUDA_ARCH = {env = "PYMFEM_CUDA_ARCH", default = "75,80,86"}
+CUDA_PREFIX = {env = "PYMFEM_CUDA_PREFIX", default = "/usr/local/cuda"}
 
 # Compiler configurations
 CC_COMMAND = {env = "CC", default = "cc"}

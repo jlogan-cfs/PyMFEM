@@ -316,6 +316,14 @@ function(build_mfem_serial)
         list(APPEND MFEM_SER_CMAKE_ARGS -DMFEM_USE_LAPACK=ON)
     endif()
     
+    # Add CUDA support if enabled (local builds only)
+    if(ENABLE_CUDA)
+        list(APPEND MFEM_SER_CMAKE_ARGS -DMFEM_USE_CUDA=ON)
+        if(CUDA_ARCH)
+            list(APPEND MFEM_SER_CMAKE_ARGS -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH})
+        endif()
+    endif()
+    
     execute_process(
         COMMAND ${CMAKE_COMMAND} ${MFEM_SER_CMAKE_ARGS} ${MFEM_SOURCE}
         WORKING_DIRECTORY ${mfem_build_dir}
@@ -422,6 +430,14 @@ function(build_mfem_parallel)
     # Add LAPACK support if enabled (use system libraries)
     if(ENABLE_LAPACK)
         list(APPEND MFEM_PAR_CMAKE_ARGS -DMFEM_USE_LAPACK=ON)
+    endif()
+    
+    # Add CUDA support if enabled (local builds only)
+    if(ENABLE_CUDA)
+        list(APPEND MFEM_PAR_CMAKE_ARGS -DMFEM_USE_CUDA=ON)
+        if(CUDA_ARCH)
+            list(APPEND MFEM_PAR_CMAKE_ARGS -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH})
+        endif()
     endif()
     
     execute_process(

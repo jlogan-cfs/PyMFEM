@@ -31,6 +31,8 @@ Configuration is now done via environment variables or `pyproject.toml` settings
 | `PYMFEM_BUILD_LIBCEED` | Build libCEED library | `OFF` |
 | `PYMFEM_BUILD_GSLIB` | Build gslib library | `OFF` |
 | `PYMFEM_ENABLE_CUDA` | Enable CUDA support | `OFF` |
+| `PYMFEM_CUDA_ARCH` | CUDA compute capability | `75,80,86` |
+| `PYMFEM_CUDA_PREFIX` | CUDA installation path | `/usr/local/cuda` |
 | `PYMFEM_ENABLE_SUITESPARSE` | Enable SuiteSparse | `OFF` |
 | `PYMFEM_ENABLE_LAPACK` | Enable LAPACK | `OFF` |
 | `PYMFEM_MFEM_SOURCE` | MFEM source directory | `./external/mfem` |
@@ -42,8 +44,11 @@ Configuration is now done via environment variables or `pyproject.toml` settings
 # Build with parallel support
 PYMFEM_BUILD_PARALLEL=ON pip install .
 
-# Build with CUDA support  
-PYMFEM_ENABLE_CUDA=ON pip install .
+# Build with CUDA support (local builds only - requires CUDA toolkit)
+PYMFEM_ENABLE_CUDA=ON pip install . --no-build-isolation
+
+# Build with specific CUDA architecture (e.g., RTX 30-series = 86)
+PYMFEM_ENABLE_CUDA=ON PYMFEM_CUDA_ARCH=86 pip install . --no-build-isolation
 
 # Build with external dependencies
 PYMFEM_BUILD_METIS=ON PYMFEM_BUILD_HYPRE=ON pip install .
