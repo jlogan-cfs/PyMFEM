@@ -70,7 +70,7 @@ option(ENABLE_CUDA "Enable CUDA support" OFF)
 
 # Set CUDA compiler flags for compatibility with newer GCC versions
 if(ENABLE_CUDA)
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --allow-unsupported-compiler")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -allow-unsupported-compiler")
     set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 endif()
 
