@@ -306,6 +306,8 @@ function(build_mfem_serial)
         )
     endif()
     
+    # GSLIB is not supported in serial builds (requires MPI)
+    
     execute_process(
         COMMAND ${CMAKE_COMMAND} ${MFEM_SER_CMAKE_ARGS} ${MFEM_SOURCE}
         WORKING_DIRECTORY ${mfem_build_dir}
@@ -396,6 +398,16 @@ function(build_mfem_parallel)
         list(APPEND MFEM_PAR_CMAKE_ARGS 
             -DMFEM_USE_CEED=ON
             -DCEED_DIR=${EXT_PREFIX}
+        )
+    endif()
+    
+    # Add GSLIB support if enabled (parallel only)
+    if(BUILD_GSLIB AND BUILD_PARALLEL)
+        list(APPEND MFEM_PAR_CMAKE_ARGS 
+            -DMFEM_USE_GSLIB=ON
+            -DGSLIB_DIR=${EXT_PREFIX}
+            -DGSLIB_INCLUDE_DIRS=${EXT_PREFIX}/include
+            -DGSLIB_LIBRARIES=${EXT_PREFIX}/lib/libgs.a
         )
     endif()
     
@@ -498,8 +510,21 @@ if(BUILD_LIBCEED)
     endif()
 endif()
 
-if(BUILD_GSLIB)
+if(BUILD_GSLIB AND BUILD_PARALLEL)
     download_external_tarball(gslib ${GSLIB_URL})
+    execute_process(
+        COMMAND ${CMAKE_COMMAND}
+            -DGSLIB_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/external/gslib
+            -DGSLIB_INSTALL_DIR_PAR=${EXT_PREFIX}
+            -DMPICC_COMMAND=${MPICC_COMMAND}
+            -DBUILD_SERIAL=OFF
+            -DBUILD_PARALLEL=ON
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build_gslib.cmake
+        RESULT_VARIABLE gslib_result
+    )
+    if(NOT gslib_result EQUAL "0")
+        message(FATAL_ERROR "Failed to build GSLIB")
+    endif()
 endif()
 
 # Download and build MFEM (always needed - serial first)
