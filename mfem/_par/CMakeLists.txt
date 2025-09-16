@@ -75,6 +75,12 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
         message(STATUS "PyMFEM _par: Skipping ${MODULE_NAME} - will be handled separately")
         continue()
     endif()
+
+    # Skip navier_solver when CUDA is enabled (incompatible with SWIG compilation)
+    if(ENABLE_CUDA AND MODULE_NAME STREQUAL "navier_solver")
+        message(STATUS "PyMFEM _par: Skipping ${MODULE_NAME} - incompatible with CUDA build")
+        continue()
+    endif()
     
     # Skip strumpack if not enabled
     if(MODULE_NAME STREQUAL "strumpack" AND NOT ENABLE_STRUMPACK)
