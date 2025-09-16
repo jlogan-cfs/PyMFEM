@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 4.0)
 
+# Set CUDA compiler flags as cache variables before any language detection
+set(CMAKE_CUDA_FLAGS "-allow-unsupported-compiler" CACHE STRING "CUDA compiler flags")
+
 # Project setup
 project(PyMFEM LANGUAGES C CXX)
 
@@ -68,9 +71,8 @@ option(BUILD_LIBCEED "Build libCEED library" OFF)
 option(BUILD_GSLIB "Build gslib library" OFF)
 option(ENABLE_CUDA "Enable CUDA support" OFF)
 
-# Set CUDA compiler flags for compatibility with newer GCC versions
+# Set CUDA host compiler when CUDA is enabled
 if(ENABLE_CUDA)
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -allow-unsupported-compiler")
     set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 endif()
 
