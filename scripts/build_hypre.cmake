@@ -51,6 +51,8 @@ endif()
 
 if(ENABLE_CUDA)
     list(APPEND HYPRE_CMAKE_ARGS -DHYPRE_WITH_CUDA=ON)
+    # Set policy to allow deprecated FindCUDA module
+    list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_POLICY_DEFAULT_CMP0146=OLD)
     if(CUDA_PREFIX)
         list(APPEND HYPRE_CMAKE_ARGS -DCUDA_TOOLKIT_ROOT_DIR=${CUDA_PREFIX})
     endif()
