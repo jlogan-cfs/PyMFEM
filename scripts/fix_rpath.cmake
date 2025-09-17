@@ -160,47 +160,14 @@ set(ALL_PYTHON_EXTS ${PYTHON_EXTS_SER} ${PYTHON_EXTS_PAR})
 foreach(PYTHON_EXT ${ALL_PYTHON_EXTS})
     get_filename_component(EXT_NAME ${PYTHON_EXT} NAME)
     message(STATUS "Fixing Python extension RPATH: ${EXT_NAME}")
-    
-    # Determine if this is a serial or parallel extension to set appropriate library list
-    if(PYTHON_EXT MATCHES ".*/mfem/_ser/.*")
-        set(REQUIRED_LIBS "libmfem")  # Serial primarily needs MFEM
-        # Add libCEED if it exists (conditional support)
-        if(EXISTS "${CMAKE_INSTALL_PREFIX}/mfem/_ser/.dylibs/libceed.${LIB_EXTENSION}")
-            list(APPEND REQUIRED_LIBS "libceed")
-        endif()
-        # LAPACK/BLAS: Using system libraries, no bundled libraries to fix
-    else()
-        set(REQUIRED_LIBS "libmfem" "libHYPRE" "libmetis")  # Parallel needs MFEM, HYPRE, METIS
-        # Add libCEED if it exists (conditional support)
-        if(EXISTS "${CMAKE_INSTALL_PREFIX}/mfem/_par/.dylibs/libceed.${LIB_EXTENSION}")
-            list(APPEND REQUIRED_LIBS "libceed")
-        endif()
-        # LAPACK/BLAS: Using system libraries, no bundled libraries to fix
-    endif()
-    
+
+    # Python extensions now only link to libmfem.so, which handles all dependency resolution
+    # We just need to set RPATH so they can find libmfem.so in .dylibs directory
+
     if(APPLE)
-        # Add RPATH to appropriate .dylibs directory
+        # Add RPATH to .dylibs directory for finding libmfem.so
         execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_INSTALL_RPATH}/.dylibs" ${PYTHON_EXT} ERROR_QUIET)
-        
-        # Get actual dependency paths and fix them
-        execute_process(COMMAND otool -L ${PYTHON_EXT} OUTPUT_VARIABLE OTOOL_OUT)
-        string(REPLACE "\n" ";" OTOOL_LINES "${OTOOL_OUT}")
-        
-        foreach(LINE ${OTOOL_LINES})
-            string(STRIP "${LINE}" LINE)
-            
-            # Check each required library
-            foreach(LIB_BASE ${REQUIRED_LIBS})
-                if(LINE MATCHES ".*${LIB_BASE}.*\\.${LIB_EXTENSION}.*" AND NOT LINE MATCHES "@.*path.*")
-                    string(REPLACE " (" ";" PARTS "${LINE}")
-                    list(GET PARTS 0 OLD_PATH)
-                    string(STRIP "${OLD_PATH}" OLD_PATH)
-                    string(REGEX REPLACE "^[\t ]+" "" OLD_PATH "${OLD_PATH}")
-                    message(STATUS "  Changing ${LIB_BASE} path: ${OLD_PATH} -> ${CMAKE_INSTALL_RPATH}/.dylibs/${LIB_BASE}.${LIB_EXTENSION}")
-                    execute_process(COMMAND install_name_tool -change "${OLD_PATH}" "${CMAKE_INSTALL_RPATH}/.dylibs/${LIB_BASE}.${LIB_EXTENSION}" ${PYTHON_EXT})
-                endif()
-            endforeach()
-        endforeach()
+        message(STATUS "  ✓ Set RPATH to ${CMAKE_INSTALL_RPATH}/.dylibs for ${EXT_NAME}")
     else()
         # Linux RPATH fixing using chrpath
         # chrpath availability already checked above for MFEM libraries
