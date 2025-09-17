@@ -152,10 +152,17 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     target_link_libraries(${MODULE_NAME} ${SER_LINK_LIBS})
 
     # Set rpath to find MFEM shared library in the installed location
-    set_target_properties(${MODULE_NAME} PROPERTIES
-        INSTALL_RPATH "$ORIGIN/.dylibs"
-        BUILD_WITH_INSTALL_RPATH ON
-    )
+    if(APPLE)
+        set_target_properties(${MODULE_NAME} PROPERTIES
+            INSTALL_RPATH "@loader_path/.dylibs"
+            BUILD_WITH_INSTALL_RPATH ON
+        )
+    else()
+        set_target_properties(${MODULE_NAME} PROPERTIES
+            INSTALL_RPATH "$ORIGIN/.dylibs"
+            BUILD_WITH_INSTALL_RPATH ON
+        )
+    endif()
 
     # Install the compiled module
     install(TARGETS ${MODULE_NAME} LIBRARY DESTINATION mfem/_ser)

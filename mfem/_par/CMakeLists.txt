@@ -175,10 +175,17 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     target_link_libraries(${MODULE_NAME}_par ${PAR_LINK_LIBS})
 
     # Set rpath to find MFEM shared library in the installed location
-    set_target_properties(${MODULE_NAME}_par PROPERTIES
-        INSTALL_RPATH "$ORIGIN/.dylibs"
-        BUILD_WITH_INSTALL_RPATH ON
-    )
+    if(APPLE)
+        set_target_properties(${MODULE_NAME}_par PROPERTIES
+            INSTALL_RPATH "@loader_path/.dylibs"
+            BUILD_WITH_INSTALL_RPATH ON
+        )
+    else()
+        set_target_properties(${MODULE_NAME}_par PROPERTIES
+            INSTALL_RPATH "$ORIGIN/.dylibs"
+            BUILD_WITH_INSTALL_RPATH ON
+        )
+    endif()
 
     # Install the module
     install(TARGETS ${MODULE_NAME}_par  LIBRARY DESTINATION mfem/_par)
@@ -239,10 +246,17 @@ target_compile_definitions(${MODULE_NAME}_par PRIVATE
 target_link_libraries(${MODULE_NAME}_par ${PAR_LINK_LIBS})
 
 # Set rpath to find MFEM shared library in the installed location
-set_target_properties(${MODULE_NAME}_par PROPERTIES
-    INSTALL_RPATH "$ORIGIN/.dylibs"
-    BUILD_WITH_INSTALL_RPATH ON
-)
+if(APPLE)
+    set_target_properties(${MODULE_NAME}_par PROPERTIES
+        INSTALL_RPATH "@loader_path/.dylibs"
+        BUILD_WITH_INSTALL_RPATH ON
+    )
+else()
+    set_target_properties(${MODULE_NAME}_par PROPERTIES
+        INSTALL_RPATH "$ORIGIN/.dylibs"
+        BUILD_WITH_INSTALL_RPATH ON
+    )
+endif()
 
 # Install the module and Python wrapper
 install(TARGETS ${MODULE_NAME}_par LIBRARY DESTINATION mfem/_par)
@@ -304,10 +318,17 @@ target_compile_definitions(${MODULE_NAME}_par PRIVATE
 target_link_libraries(${MODULE_NAME}_par ${PAR_LINK_LIBS})
 
 # Set rpath to find MFEM shared library in the installed location
-set_target_properties(${MODULE_NAME}_par PROPERTIES
-    INSTALL_RPATH "$ORIGIN/.dylibs"
-    BUILD_WITH_INSTALL_RPATH ON
-)
+if(APPLE)
+    set_target_properties(${MODULE_NAME}_par PROPERTIES
+        INSTALL_RPATH "@loader_path/.dylibs"
+        BUILD_WITH_INSTALL_RPATH ON
+    )
+else()
+    set_target_properties(${MODULE_NAME}_par PROPERTIES
+        INSTALL_RPATH "$ORIGIN/.dylibs"
+        BUILD_WITH_INSTALL_RPATH ON
+    )
+endif()
 
 # Install the module and Python wrapper
 install(TARGETS ${MODULE_NAME}_par LIBRARY DESTINATION mfem/_par)
