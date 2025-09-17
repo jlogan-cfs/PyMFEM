@@ -123,8 +123,9 @@ foreach(MFEM_LIB ${MFEM_LIBS})
             message(FATAL_ERROR "chrpath is required for Linux builds but not found. Please install chrpath: apt-get install chrpath or yum install chrpath")
         endif()
 
+        # For MFEM libraries, they need to find dependencies in the same directory (not .dylibs subdirectory)
         execute_process(
-            COMMAND chrpath -r "${CMAKE_INSTALL_RPATH}" ${MFEM_LIB}
+            COMMAND chrpath -r "$ORIGIN" ${MFEM_LIB}
             RESULT_VARIABLE RPATH_RESULT
         )
         
