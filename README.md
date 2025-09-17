@@ -34,7 +34,12 @@ sudo yum install openblas-devel lapack-devel mpich-devel chrpath
 
 **Additional Build Dependencies:**
 - **Linux**: `chrpath` - required for fixing library runtime paths
-- **macOS**: `install_name_tool` - provided by Xcode Command Line Tools for fixing library runtime paths
+- **macOS**: `install_name_tool` and `otool` - provided by Xcode Command Line Tools for fixing library runtime paths and dependency analysis
+- **CUDA builds**: `nvcc` - NVIDIA CUDA compiler required when building with CUDA support (`ENABLE_CUDA=ON`)
+- **BLAS/LAPACK**: System BLAS/LAPACK libraries are automatically detected and used:
+  - **Linux**: OpenBLAS (included in `libopenblas-dev`) or other BLAS implementations
+  - **macOS**: Apple Accelerate framework (automatically available)
+  - **Alternative**: Intel MKL or other optimized BLAS libraries if installed
 
 ### Install PyMFEM
 ```shell
