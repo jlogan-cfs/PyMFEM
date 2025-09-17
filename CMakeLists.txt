@@ -19,6 +19,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Set position independent code for all builds to ensure shared library compatibility
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # Set parallel build level for make commands
 include(ProcessorCount)
 ProcessorCount(N)
