@@ -144,10 +144,7 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
 
     set(SER_LINK_LIBS Python::Module ${MFEM_LIB})
     
-    # Add libCEED library if enabled
-    if(BUILD_LIBCEED)
-        list(APPEND SER_LINK_LIBS "${EXT_PREFIX}/lib/libceed.${LIB_EXTENSION}")
-    endif()
+    # Note: libCEED is linked through libmfem.so, no need to link directly
 
     target_link_libraries(${MODULE_NAME} ${SER_LINK_LIBS})
 

@@ -153,24 +153,15 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
         NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
     )
     
-    # Link against Python, MPI, parallel MFEM, and dependencies
-    # Use platform-appropriate library extensions
+    # Link against Python, MPI, and parallel MFEM
+    # Note: HYPRE, METIS, and libCEED are linked through libmfem.so, no need to link directly
     set(MFEM_LIB "${MFEM_SOURCE}/build_par/install/lib/libmfem.${LIB_EXTENSION}")
-    set(HYPRE_LIB "${EXT_PREFIX}/lib/libHYPRE.${LIB_EXTENSION}") 
-    set(METIS_LIB "${EXT_PREFIX}/lib/libmetis.${LIB_EXTENSION}")
-    
+
     set(PAR_LINK_LIBS
-        Python::Module 
+        Python::Module
         ${MPI_CXX_LIBRARIES}
         ${MFEM_LIB}
-        ${HYPRE_LIB}
-        ${METIS_LIB}
     )
-    
-    # Add libCEED library if enabled
-    if(BUILD_LIBCEED)
-        list(APPEND PAR_LINK_LIBS "${EXT_PREFIX}/lib/libceed.${LIB_EXTENSION}")
-    endif()
     
     target_link_libraries(${MODULE_NAME}_par ${PAR_LINK_LIBS})
 
