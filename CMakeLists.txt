@@ -22,6 +22,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Set position independent code for all builds to ensure shared library compatibility
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Also set CFLAGS environment variable to ensure -fPIC is used for Makefile-based builds
+set(ENV{CFLAGS} "-fPIC $ENV{CFLAGS}")
+set(ENV{CXXFLAGS} "-fPIC $ENV{CXXFLAGS}")
+message(STATUS "Set global -fPIC flags for shared library compatibility")
+
 # Set parallel build level for make commands
 include(ProcessorCount)
 ProcessorCount(N)
