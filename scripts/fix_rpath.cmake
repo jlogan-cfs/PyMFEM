@@ -167,18 +167,52 @@ foreach(PYTHON_EXT ${ALL_PYTHON_EXTS})
     if(APPLE)
         # Add RPATH to .dylibs directory for finding libmfem.so
         execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_INSTALL_RPATH}/.dylibs" ${PYTHON_EXT} ERROR_QUIET)
-        message(STATUS "  ✓ Set RPATH to ${CMAKE_INSTALL_RPATH}/.dylibs for ${EXT_NAME}")
+
+        # Fix the hardcoded libmfem path to use @rpath
+        execute_process(COMMAND otool -L ${PYTHON_EXT} OUTPUT_VARIABLE OTOOL_OUT)
+        string(REPLACE "\n" ";" OTOOL_LINES "${OTOOL_OUT}")
+
+        foreach(LINE ${OTOOL_LINES})
+            string(STRIP "${LINE}" LINE)
+
+            # Look for libmfem dependency and fix the path
+            if(LINE MATCHES ".*libmfem.*\\.dylib.*" AND NOT LINE MATCHES "@.*path.*")
+                string(REPLACE " (" ";" PARTS "${LINE}")
+                list(GET PARTS 0 OLD_PATH)
+                string(STRIP "${OLD_PATH}" OLD_PATH)
+                string(REGEX REPLACE "^[\t ]+" "" OLD_PATH "${OLD_PATH}")
+
+                # Extract just the library name (e.g., libmfem.4.7.0.dylib)
+                get_filename_component(LIB_NAME ${OLD_PATH} NAME)
+                message(STATUS "  Fixing libmfem path: ${OLD_PATH} -> @rpath/${LIB_NAME}")
+                execute_process(COMMAND install_name_tool -change "${OLD_PATH}" "@rpath/${LIB_NAME}" ${PYTHON_EXT})
+            endif()
+        endforeach()
+
+        message(STATUS "  ✓ Fixed RPATH and libmfem path for ${EXT_NAME}")
     else()
-        # Linux RPATH fixing using chrpath
+        # Linux: Fix RPATH using chrpath
         # chrpath availability already checked above for MFEM libraries
+
+        # Set RPATH to find libraries in .dylibs directory
         execute_process(
             COMMAND chrpath -r "${CMAKE_INSTALL_RPATH}/.dylibs" ${PYTHON_EXT}
             RESULT_VARIABLE CHRPATH_RESULT
         )
+
         if(CHRPATH_RESULT EQUAL 0)
             message(STATUS "  ✓ Set RPATH to ${CMAKE_INSTALL_RPATH}/.dylibs for ${EXT_NAME}")
         else()
-            message(WARNING "  ✗ Failed to set RPATH for ${EXT_NAME}")
+            # Try to add RPATH if setting it failed (some binaries may not have RPATH initially)
+            execute_process(
+                COMMAND chrpath -a "${CMAKE_INSTALL_RPATH}/.dylibs" ${PYTHON_EXT}
+                RESULT_VARIABLE CHRPATH_ADD_RESULT
+            )
+            if(CHRPATH_ADD_RESULT EQUAL 0)
+                message(STATUS "  ✓ Added RPATH ${CMAKE_INSTALL_RPATH}/.dylibs for ${EXT_NAME}")
+            else()
+                message(WARNING "  ✗ Failed to set RPATH for ${EXT_NAME}")
+            endif()
         endif()
     endif()
 endforeach()
