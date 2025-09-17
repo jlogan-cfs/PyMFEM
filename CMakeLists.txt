@@ -315,7 +315,7 @@ function(build_mfem_serial)
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
-        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+# Don't set CMAKE_BUILD_WITH_INSTALL_RPATH - let fix_rpath.cmake handle it
         -DCMAKE_INSTALL_PREFIX=${mfem_build_dir}/install
     )
     
@@ -437,7 +437,7 @@ function(build_mfem_parallel)
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
-        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+# Don't set CMAKE_BUILD_WITH_INSTALL_RPATH - let fix_rpath.cmake handle it
         # Parallel-specific flags
         -DCMAKE_CXX_COMPILER=${MPICXX_COMMAND}
         -DCMAKE_INSTALL_PREFIX=${mfem_build_dir}/install
