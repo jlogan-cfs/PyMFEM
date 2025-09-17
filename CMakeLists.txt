@@ -171,7 +171,7 @@ endfunction()
 set(MFEM_GIT_URL "https://github.com/mfem/mfem.git")
 set(MFEM_GIT_SHA "dc9128ef596e84daf1138aa3046b826bba9d259f")  # v4.7
 
-set(HYPRE_URL "https://github.com/hypre-space/hypre/archive/v2.33.0.tar.gz")
+set(HYPRE_URL "https://github.com/hypre-space/hypre/archive/v2.28.0.tar.gz")
 set(METIS_URL "https://github.com/mfem/tpls/raw/gh-pages/metis-5.1.0.tar.gz")
 set(LIBCEED_URL "https://github.com/CEED/libCEED/archive/refs/tags/v0.12.0.tar.gz")
 set(GSLIB_URL "https://github.com/Nek5000/gslib/archive/refs/tags/v1.0.8.tar.gz")
@@ -397,7 +397,24 @@ function(build_mfem_parallel)
     
     message(STATUS "Building parallel MFEM at ${MFEM_SOURCE}")
     message(STATUS "Looking for MFEM lib deps at ${EXT_PREFIX}/lib")
-    
+
+    # Verify required dependencies exist before building
+    if(BUILD_HYPRE)
+        set(HYPRE_LIB_PATH "${EXT_PREFIX}/lib/libHYPRE.${LIB_EXTENSION}")
+        if(NOT EXISTS ${HYPRE_LIB_PATH})
+            message(FATAL_ERROR "HYPRE library not found at ${HYPRE_LIB_PATH}. HYPRE must be built before parallel MFEM.")
+        endif()
+        message(STATUS "Found HYPRE library at ${HYPRE_LIB_PATH}")
+    endif()
+
+    if(BUILD_METIS)
+        set(METIS_LIB_PATH "${EXT_PREFIX}/lib/libmetis.${LIB_EXTENSION}")
+        if(NOT EXISTS ${METIS_LIB_PATH})
+            message(FATAL_ERROR "METIS library not found at ${METIS_LIB_PATH}. METIS must be built before parallel MFEM.")
+        endif()
+        message(STATUS "Found METIS library at ${METIS_LIB_PATH}")
+    endif()
+
     # Create build directory
     file(MAKE_DIRECTORY ${mfem_build_dir})
     
@@ -512,9 +529,30 @@ function(build_mfem_parallel)
     endif()
 endfunction()
 
-# Download and build dependencies in order based on options
+# Download and build dependencies in correct order
+# First, download all required external dependencies
 if(BUILD_PARALLEL OR BUILD_METIS)
     download_external_tarball(metis ${METIS_URL})
+endif()
+
+if(BUILD_PARALLEL OR BUILD_HYPRE)
+    download_external_tarball(hypre ${HYPRE_URL})
+endif()
+
+if(BUILD_LIBCEED)
+    download_external_tarball(libceed ${LIBCEED_URL})
+endif()
+
+if(BUILD_GSLIB AND BUILD_PARALLEL)
+    download_external_tarball(gslib ${GSLIB_URL})
+endif()
+
+# Download MFEM source
+download_mfem()
+
+# Build dependencies in order (parallel dependencies must be built before parallel MFEM)
+if(BUILD_PARALLEL OR BUILD_METIS)
+    message(STATUS "Building METIS dependency for parallel MFEM")
     execute_process(
         COMMAND ${CMAKE_COMMAND}
             -DMETIS_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/external/metis
@@ -529,10 +567,11 @@ if(BUILD_PARALLEL OR BUILD_METIS)
     if(NOT metis_result EQUAL "0")
         message(FATAL_ERROR "Failed to build METIS")
     endif()
+    message(STATUS "METIS build completed successfully")
 endif()
 
 if(BUILD_PARALLEL OR BUILD_HYPRE)
-    download_external_tarball(hypre ${HYPRE_URL})
+    message(STATUS "Building HYPRE dependency for parallel MFEM")
     execute_process(
         COMMAND ${CMAKE_COMMAND}
             -DHYPRE_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/external/hypre
@@ -549,10 +588,11 @@ if(BUILD_PARALLEL OR BUILD_HYPRE)
     if(NOT hypre_result EQUAL "0")
         message(FATAL_ERROR "Failed to build HYPRE")
     endif()
+    message(STATUS "HYPRE build completed successfully")
 endif()
 
 if(BUILD_LIBCEED)
-    download_external_tarball(libceed ${LIBCEED_URL})
+    message(STATUS "Building libCEED dependency")
     execute_process(
         COMMAND ${CMAKE_COMMAND}
             -DLIBCEED_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/external/libceed
@@ -567,10 +607,11 @@ if(BUILD_LIBCEED)
     if(NOT libceed_result EQUAL "0")
         message(FATAL_ERROR "Failed to build libCEED")
     endif()
+    message(STATUS "libCEED build completed successfully")
 endif()
 
 if(BUILD_GSLIB AND BUILD_PARALLEL)
-    download_external_tarball(gslib ${GSLIB_URL})
+    message(STATUS "Building GSLIB dependency for parallel MFEM")
     execute_process(
         COMMAND ${CMAKE_COMMAND}
             -DGSLIB_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/external/gslib
@@ -584,6 +625,7 @@ if(BUILD_GSLIB AND BUILD_PARALLEL)
     if(NOT gslib_result EQUAL "0")
         message(FATAL_ERROR "Failed to build GSLIB")
     endif()
+    message(STATUS "GSLIB build completed successfully")
 endif()
 
 # LAPACK/BLAS: Let MFEM use system libraries (Apple Accelerate, OpenBLAS, MKL, etc.)
@@ -591,12 +633,14 @@ if(ENABLE_LAPACK)
     message(STATUS "LAPACK enabled - MFEM will use system LAPACK/BLAS libraries")
 endif()
 
-# Download and build MFEM (always needed - serial first)
-download_mfem()
+# Build MFEM (serial first, then parallel if requested)
+# All dependencies are now guaranteed to be built and installed
+message(STATUS "All dependencies built successfully, proceeding with MFEM builds")
 build_mfem_serial()
 
-# Build parallel MFEM if requested
+# Build parallel MFEM if requested - all dependencies are now available
 if(BUILD_PARALLEL)
+    message(STATUS "Building parallel MFEM (dependencies are ready)")
     build_mfem_parallel()
 endif()
 

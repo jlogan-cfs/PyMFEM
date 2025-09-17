@@ -49,19 +49,12 @@ if(APPLE)
     list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_INSTALL_NAME_DIR=${hypre_install_dir}/lib)
 endif()
 
-if(ENABLE_CUDA)
-    list(APPEND HYPRE_CMAKE_ARGS -DHYPRE_WITH_CUDA=ON)
-    # Set policy to allow deprecated FindCUDA module
-    list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_POLICY_DEFAULT_CMP0146=OLD)
-    if(CUDA_PREFIX)
-        list(APPEND HYPRE_CMAKE_ARGS -DCUDA_TOOLKIT_ROOT_DIR=${CUDA_PREFIX})
-    endif()
-    if(CUDA_ARCH)
-        list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH})
-    endif()
-else()
-    list(APPEND HYPRE_CMAKE_ARGS -DCMAKE_C_COMPILER=${MPICC_COMMAND})
-endif()
+# HYPRE 2.28 is not compatible with CUDA 12, so disable CUDA for HYPRE
+# Always use MPI compiler and disable CUDA for HYPRE
+list(APPEND HYPRE_CMAKE_ARGS
+    -DHYPRE_WITH_CUDA=OFF
+    -DCMAKE_C_COMPILER=${MPICC_COMMAND}
+)
 
 execute_process(
     COMMAND ${CMAKE_COMMAND} ${HYPRE_CMAKE_ARGS} ..

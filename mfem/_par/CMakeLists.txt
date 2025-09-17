@@ -173,7 +173,13 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
     endif()
     
     target_link_libraries(${MODULE_NAME}_par ${PAR_LINK_LIBS})
-    
+
+    # Set rpath to find MFEM shared library in the installed location
+    set_target_properties(${MODULE_NAME}_par PROPERTIES
+        INSTALL_RPATH "$ORIGIN/.dylibs"
+        BUILD_WITH_INSTALL_RPATH ON
+    )
+
     # Install the module
     install(TARGETS ${MODULE_NAME}_par  LIBRARY DESTINATION mfem/_par)
 
@@ -232,6 +238,11 @@ target_compile_definitions(${MODULE_NAME}_par PRIVATE
 # Link libraries
 target_link_libraries(${MODULE_NAME}_par ${PAR_LINK_LIBS})
 
+# Set rpath to find MFEM shared library in the installed location
+set_target_properties(${MODULE_NAME}_par PROPERTIES
+    INSTALL_RPATH "$ORIGIN/.dylibs"
+    BUILD_WITH_INSTALL_RPATH ON
+)
 
 # Install the module and Python wrapper
 install(TARGETS ${MODULE_NAME}_par LIBRARY DESTINATION mfem/_par)
@@ -292,6 +303,12 @@ target_compile_definitions(${MODULE_NAME}_par PRIVATE
 # Link libraries
 target_link_libraries(${MODULE_NAME}_par ${PAR_LINK_LIBS})
 
+# Set rpath to find MFEM shared library in the installed location
+set_target_properties(${MODULE_NAME}_par PROPERTIES
+    INSTALL_RPATH "$ORIGIN/.dylibs"
+    BUILD_WITH_INSTALL_RPATH ON
+)
+
 # Install the module and Python wrapper
 install(TARGETS ${MODULE_NAME}_par LIBRARY DESTINATION mfem/_par)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/swig_par/${MODULE_NAME}.py DESTINATION mfem/_par)
@@ -320,8 +337,12 @@ install(DIRECTORY "${MFEM_SOURCE}/build_par/install/lib/"
         DESTINATION mfem/_par/.dylibs
         FILES_MATCHING PATTERN "libmfem.*"
         PATTERN "cmake" EXCLUDE)
-install(FILES ${HYPRE_LIB_INSTALL} DESTINATION mfem/_par/.dylibs OPTIONAL)  
-install(FILES ${METIS_LIB_INSTALL} DESTINATION mfem/_par/.dylibs OPTIONAL)
+# Install HYPRE library (may have version numbers in filename)
+install(DIRECTORY "${EXT_PREFIX}/lib/"
+        DESTINATION mfem/_par/.dylibs
+        FILES_MATCHING PATTERN "libHYPRE*"
+        PATTERN "cmake" EXCLUDE)
+install(FILES ${METIS_LIB_INSTALL} DESTINATION mfem/_par/.dylibs)
 
 # Install libCEED library if enabled
 if(BUILD_LIBCEED)
