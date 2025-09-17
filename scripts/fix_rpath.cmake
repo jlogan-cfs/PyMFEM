@@ -152,8 +152,9 @@ endforeach()
 message(STATUS "Fixing RPATH for Python extension modules...")
 
 # Find all Python extension files in both serial and parallel directories
-file(GLOB_RECURSE PYTHON_EXTS_SER "${CMAKE_INSTALL_PREFIX}/mfem/_ser/*.so")
-file(GLOB_RECURSE PYTHON_EXTS_PAR "${CMAKE_INSTALL_PREFIX}/mfem/_par/*.so")
+# Use GLOB (not GLOB_RECURSE) to avoid finding libmfem.so in .dylibs subdirectories
+file(GLOB PYTHON_EXTS_SER "${CMAKE_INSTALL_PREFIX}/mfem/_ser/*.so")
+file(GLOB PYTHON_EXTS_PAR "${CMAKE_INSTALL_PREFIX}/mfem/_par/*.so")
 
 # Process all Python extensions
 set(ALL_PYTHON_EXTS ${PYTHON_EXTS_SER} ${PYTHON_EXTS_PAR})
