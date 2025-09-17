@@ -114,6 +114,15 @@ foreach(MFEM_LIB ${MFEM_LIBS})
         
     else()
         # Linux: Use chrpath to replace existing RPATH
+        # First check if chrpath is available
+        execute_process(
+            COMMAND which chrpath
+            RESULT_VARIABLE CHRPATH_AVAILABLE
+        )
+        if(NOT CHRPATH_AVAILABLE EQUAL 0)
+            message(FATAL_ERROR "chrpath is required for Linux builds but not found. Please install chrpath: apt-get install chrpath or yum install chrpath")
+        endif()
+
         execute_process(
             COMMAND chrpath -r "${CMAKE_INSTALL_RPATH}" ${MFEM_LIB}
             RESULT_VARIABLE RPATH_RESULT
@@ -194,8 +203,16 @@ foreach(PYTHON_EXT ${ALL_PYTHON_EXTS})
         endforeach()
     else()
         # Linux RPATH fixing using chrpath
-        execute_process(COMMAND chrpath -r "${CMAKE_INSTALL_RPATH}/.dylibs" ${PYTHON_EXT})
-        message(STATUS "  Set RPATH to ${CMAKE_INSTALL_RPATH}/.dylibs for ${EXT_NAME}")
+        # chrpath availability already checked above for MFEM libraries
+        execute_process(
+            COMMAND chrpath -r "${CMAKE_INSTALL_RPATH}/.dylibs" ${PYTHON_EXT}
+            RESULT_VARIABLE CHRPATH_RESULT
+        )
+        if(CHRPATH_RESULT EQUAL 0)
+            message(STATUS "  ✓ Set RPATH to ${CMAKE_INSTALL_RPATH}/.dylibs for ${EXT_NAME}")
+        else()
+            message(WARNING "  ✗ Failed to set RPATH for ${EXT_NAME}")
+        endif()
     endif()
 endforeach()
 

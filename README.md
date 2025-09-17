@@ -16,20 +16,25 @@ PyMFEM requires the following system libraries to be installed:
 
 **Ubuntu/Debian:**
 ```shell
-sudo apt-get install libopenblas-dev liblapack-dev libopenmpi-dev
+sudo apt-get install libopenblas-dev liblapack-dev libopenmpi-dev chrpath
 ```
 
 **macOS:**
 ```shell
 brew install openmpi
 # BLAS/LAPACK are provided by Apple Accelerate framework (already installed)
+# install_name_tool is provided by Xcode Command Line Tools (already installed)
 ```
 
 **CentOS/RHEL/Fedora:**
 ```shell
-sudo yum install openblas-devel lapack-devel mpich-devel
-# or: sudo dnf install openblas-devel lapack-devel mpich-devel
+sudo yum install openblas-devel lapack-devel mpich-devel chrpath
+# or: sudo dnf install openblas-devel lapack-devel mpich-devel chrpath
 ```
+
+**Additional Build Dependencies:**
+- **Linux**: `chrpath` - required for fixing library runtime paths
+- **macOS**: `install_name_tool` - provided by Xcode Command Line Tools for fixing library runtime paths
 
 ### Install PyMFEM
 ```shell
