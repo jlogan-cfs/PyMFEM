@@ -53,7 +53,7 @@ if(BUILD_SERIAL AND DEFINED GSLIB_INSTALL_DIR_SER)
     
     # Build serial gslib
     execute_process(
-        COMMAND make CC=${CC_COMMAND} MPI=0 "CFLAGS=-fPIC"
+        COMMAND make CC=${CC_COMMAND} MPI=0 "CFLAGS=$ENV{CFLAGS}"
         WORKING_DIRECTORY ${gslib_dir}
         RESULT_VARIABLE build_result
     )
@@ -93,7 +93,7 @@ if(BUILD_PARALLEL AND DEFINED GSLIB_INSTALL_DIR_PAR AND DEFINED MPICC_COMMAND)
     
     # Build parallel gslib
     execute_process(
-        COMMAND make CC=${MPICC_COMMAND} "CFLAGS=-O2 -fPIC"
+        COMMAND make CC=${MPICC_COMMAND} "CFLAGS=$ENV{CFLAGS}"
         WORKING_DIRECTORY ${gslib_dir}
         RESULT_VARIABLE build_result
     )
