@@ -18,12 +18,6 @@ set(hypre_dir ${HYPRE_SOURCE_DIR})
 set(hypre_build_dir ${hypre_dir}/src/cmbuild)
 set(hypre_install_dir ${HYPRE_INSTALL_DIR})
 
-# Check if HYPRE is already built
-if(EXISTS ${hypre_install_dir}/lib/libHYPRE.a OR EXISTS ${hypre_install_dir}/lib/libHYPRE.${LIB_EXTENSION})
-    message(STATUS "HYPRE already built at ${hypre_install_dir}")
-    return()
-endif()
-
 message(STATUS "Building HYPRE at ${hypre_dir}")
 message(STATUS "Installing HYPRE at ${hypre_install_dir}")
 

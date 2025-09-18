@@ -325,13 +325,7 @@ endfunction()
 # Function to build MFEM using CMake
 function(build_mfem_serial)
     set(mfem_build_dir ${MFEM_SOURCE}/build)
-    
-    # Check if MFEM is already built
-    if(EXISTS ${mfem_build_dir}/libmfem.a OR EXISTS ${mfem_build_dir}/libmfem.so OR EXISTS ${mfem_build_dir}/libmfem.dylib)
-        message(STATUS "MFEM already built at ${mfem_build_dir}")
-        return()
-    endif()
-    
+
     message(STATUS "Building MFEM at ${MFEM_SOURCE}")
     
     # Create build directory
@@ -425,13 +419,7 @@ endfunction()
 # Function to build parallel MFEM using CMake
 function(build_mfem_parallel)
     set(mfem_build_dir ${MFEM_SOURCE}/build_par)
-    
-    # Check if parallel MFEM is already built
-    if(EXISTS ${mfem_build_dir}/libmfem.a OR EXISTS ${mfem_build_dir}/libmfem.so)
-        message(STATUS "Parallel MFEM already built at ${mfem_build_dir}")
-        return()
-    endif()
-    
+
     message(STATUS "Building parallel MFEM at ${MFEM_SOURCE}")
     message(STATUS "Looking for MFEM lib deps at ${EXT_PREFIX}/lib")
 

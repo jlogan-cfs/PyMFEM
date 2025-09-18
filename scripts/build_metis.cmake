@@ -14,12 +14,6 @@ endif()
 set(metis_dir ${METIS_SOURCE_DIR})
 set(metis_install_dir ${METIS_INSTALL_DIR})
 
-# Check if METIS is already built
-if(EXISTS ${metis_install_dir}/lib/libmetis.a OR EXISTS ${metis_install_dir}/lib/libmetis.${LIB_EXTENSION})
-    message(STATUS "METIS already built at ${metis_install_dir}")
-    return()
-endif()
-
 message(STATUS "Building METIS at ${metis_dir}")
 message(STATUS "METIS will be installed to: ${metis_install_dir}")
 

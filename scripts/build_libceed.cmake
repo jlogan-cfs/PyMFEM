@@ -15,12 +15,6 @@ endif()
 set(libceed_dir ${LIBCEED_SOURCE_DIR})
 set(libceed_install_dir ${LIBCEED_INSTALL_DIR})
 
-# Check if libCEED is already built
-if(EXISTS ${libceed_install_dir}/lib/libceed.a OR EXISTS ${libceed_install_dir}/lib/libceed.${LIB_EXTENSION})
-    message(STATUS "libCEED already built at ${libceed_install_dir}")
-    return()
-endif()
-
 message(STATUS "Building libCEED at ${libceed_dir}")
 message(STATUS "Installing libCEED at ${libceed_install_dir}")
 
