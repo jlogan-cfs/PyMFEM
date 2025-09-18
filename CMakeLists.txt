@@ -132,6 +132,28 @@ if(DEFINED ENV{MPICXX})
     set(MPICXX_COMMAND $ENV{MPICXX})
 endif()
 
+# x86 vectorization option
+option(ENABLE_X86_SIMD "Enable x86 SIMD optimizations (SSE4, AVX, AVX2)" OFF)
+
+# Set vectorization flags for x86/x64 targets
+if(ENABLE_X86_SIMD AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i386|i686")
+    set(VECTORIZATION_FLAGS "")
+
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        list(APPEND VECTORIZATION_FLAGS "-msse4.1" "-mavx" "-mavx2")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        list(APPEND VECTORIZATION_FLAGS "/arch:AVX2")
+    endif()
+
+    # Apply vectorization flags globally
+    if(VECTORIZATION_FLAGS)
+        string(JOIN " " VECTORIZATION_FLAGS_STR ${VECTORIZATION_FLAGS})
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VECTORIZATION_FLAGS_STR}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${VECTORIZATION_FLAGS_STR}")
+        message(STATUS "Enabled x86 SIMD optimizations: ${VECTORIZATION_FLAGS_STR}")
+    endif()
+endif()
+
 # Find MPI if building parallel
 if(BUILD_PARALLEL)
     find_package(MPI REQUIRED)
