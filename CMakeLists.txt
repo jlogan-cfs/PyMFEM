@@ -567,7 +567,11 @@ function(build_mfem_parallel)
 endfunction()
 
 # Download and build dependencies in correct order
-# First, download all required external dependencies
+# First, clean up any leftover external directory from previous failed builds
+message(STATUS "Cleaning up any existing external/ directory from previous builds")
+file(REMOVE_RECURSE ${CMAKE_CURRENT_SOURCE_DIR}/external)
+
+# Download all required external dependencies
 if(BUILD_PARALLEL OR BUILD_METIS)
     download_external_tarball(metis ${METIS_URL})
 endif()
@@ -731,6 +735,12 @@ install(DIRECTORY mfem/common/ DESTINATION mfem/common/
 
 # Install data and examples
 install(DIRECTORY data/ DESTINATION share/mfem/data)
-install(DIRECTORY examples/ DESTINATION share/mfem/examples 
+install(DIRECTORY examples/ DESTINATION share/mfem/examples
             FILES_MATCHING PATTERN "*.py"
             PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+# Clean up external directory after installation
+install(CODE "
+    message(STATUS \"Removing external/ directory after installation\")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_SOURCE_DIR}/external)
+")
