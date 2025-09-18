@@ -146,12 +146,14 @@ if(ENABLE_X86_SIMD AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i386|i686")
         list(APPEND VECTORIZATION_FLAGS "/arch:AVX2")
     endif()
 
-    # Apply vectorization flags globally
+    # Apply vectorization flags via environment variables (like -fPIC) to ensure they propagate to all builds
     if(VECTORIZATION_FLAGS)
         string(JOIN " " VECTORIZATION_FLAGS_STR ${VECTORIZATION_FLAGS})
+        set(ENV{CFLAGS} "${VECTORIZATION_FLAGS_STR} $ENV{CFLAGS}")
+        set(ENV{CXXFLAGS} "${VECTORIZATION_FLAGS_STR} $ENV{CXXFLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VECTORIZATION_FLAGS_STR}")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${VECTORIZATION_FLAGS_STR}")
-        message(STATUS "Enabled x86 SIMD optimizations: ${VECTORIZATION_FLAGS_STR}")
+        message(STATUS "Enabled x86 SIMD optimizations via environment and CMake flags: ${VECTORIZATION_FLAGS_STR}")
     else()
         message(STATUS "Unable to set x86 vectorization flags for unexpected CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
     endif()
