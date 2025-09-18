@@ -76,13 +76,16 @@ option(BUILD_LIBCEED "Build libCEED library" OFF)
 option(BUILD_GSLIB "Build gslib library" OFF)
 option(ENABLE_CUDA "Enable CUDA support" OFF)
 
-
-option(ENABLE_SUITESPARSE "Enable SuiteSparse" OFF)
-option(ENABLE_LAPACK "Enable LAPACK" OFF)
-option(ENABLE_PUMI "Enable PUMI" OFF)
-option(ENABLE_STRUMPACK "Enable STRUMPACK" OFF)
-
 # LAPACK will be auto-detected from system or built from source if ENABLE_LAPACK is ON
+option(ENABLE_LAPACK "Enable LAPACK" OFF)
+
+# x86 vectorization option
+option(ENABLE_X86_SIMD "Enable x86 SIMD optimizations (SSE4, AVX, AVX2)" OFF)
+
+# Not supported yet
+# option(ENABLE_SUITESPARSE "Enable SuiteSparse" OFF)
+# option(ENABLE_PUMI "Enable PUMI" OFF)
+# option(ENABLE_STRUMPACK "Enable STRUMPACK" OFF)
 
 # Path configurations
 # If EXT_PREFIX is empty or not set, use a default location
@@ -132,12 +135,10 @@ if(DEFINED ENV{MPICXX})
     set(MPICXX_COMMAND $ENV{MPICXX})
 endif()
 
-# x86 vectorization option
-option(ENABLE_X86_SIMD "Enable x86 SIMD optimizations (SSE4, AVX, AVX2)" OFF)
-
 # Set vectorization flags for x86/x64 targets
 if(ENABLE_X86_SIMD AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i386|i686")
     set(VECTORIZATION_FLAGS "")
+    message(STATUS "Setting x86 vectorization flags")
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         list(APPEND VECTORIZATION_FLAGS "-msse4.1" "-mavx" "-mavx2")
@@ -151,7 +152,11 @@ if(ENABLE_X86_SIMD AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i386|i686")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VECTORIZATION_FLAGS_STR}")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${VECTORIZATION_FLAGS_STR}")
         message(STATUS "Enabled x86 SIMD optimizations: ${VECTORIZATION_FLAGS_STR}")
+    else()
+        message(STATUS "Unable to set x86 vectorization flags for unexpected CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
     endif()
+else()
+    message(STATUS "Skipping x86 vectorization flags with ENABLE_X86_SIMD=${ENABLE_X86_SIMD} and CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}" )
 endif()
 
 # Find MPI if building parallel
