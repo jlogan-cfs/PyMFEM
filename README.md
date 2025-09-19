@@ -21,7 +21,7 @@ sudo apt-get install libopenblas-dev liblapack-dev libopenmpi-dev chrpath
 
 **macOS:**
 ```shell
-brew install openmpi
+brew install mpich
 # BLAS/LAPACK are provided by Apple Accelerate framework (already installed)
 # install_name_tool is provided by Xcode Command Line Tools (already installed)
 ```
