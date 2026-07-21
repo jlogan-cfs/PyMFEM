@@ -9,7 +9,7 @@ namespace mfem {
     self._coeff = args
 %}
 %pythonappend DomainLFGradIntegrator::DomainLFGradIntegrator %{
-    self._coeff = QF
+    self._coeff = (QF, ir)
 %}
 %pythonappend BoundaryLFIntegrator::BoundaryLFIntegrator %{
     self._coeff = QG
@@ -21,7 +21,7 @@ namespace mfem {
     self._coeff = QG
 %}
 %pythonappend VectorDomainLFIntegrator::VectorDomainLFIntegrator %{
-    self._coeff = QF
+    self._coeff = (QF, ir)
 %}
 %pythonappend VectorDomainLFGradIntegrator::VectorDomainLFGradIntegrator %{
     self._coeff = QF
@@ -30,7 +30,7 @@ namespace mfem {
     self._coeff = QG
 %}
 %pythonappend VectorFEDomainLFIntegrator::VectorFEDomainLFIntegrator %{
-    self._coeff = F
+    self._coeff = (F, ir)
 %}
 %pythonappend VectorFEDomainLFCurlIntegrator::VectorFEDomainLFCurlIntegrator %{
     self._coeff = F
@@ -43,6 +43,9 @@ namespace mfem {
 %}
 %pythonappend VectorFEBoundaryFluxLFIntegrator::VectorFEBoundaryFluxLFIntegrator %{
     self._coeff = args
+%}
+%pythonappend VectorFEBoundaryNormalLFIntegrator::VectorFEBoundaryNormalLFIntegrator %{
+    self._coeff = f
 %}
 %pythonappend VectorFEBoundaryTangentLFIntegrator::VectorFEBoundaryTangentLFIntegrator %{
     self._coeff = QG
@@ -57,7 +60,7 @@ namespace mfem {
     self._coeff = uD_
 %}
 %pythonappend WhiteGaussianNoiseDomainLFIntegrator::WhiteGaussianNoiseDomainLFIntegrator %{
-    self._coeff = QG
+    self._coeff = args
 %}
 %pythonappend VectorQuadratureLFIntegrator::VectorQuadratureLFIntegrator %{
     self._coeff = (vqfc, ir)

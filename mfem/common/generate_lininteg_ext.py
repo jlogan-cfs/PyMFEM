@@ -11,15 +11,19 @@ for line in fid.readlines():
         if line.find("*args") != -1:
             pp = "    self._coeff = args"
         elif line.find("self, seed_=0") != -1:
-            pp = "    self._coeff = QG"
+            pass
         elif line.find("self, vqfc, ir") != -1:
             pp = "    self._coeff = (vqfc, ir)"
         elif line.find("self, qfc, ir") != -1:
             pp = "    self._coeff = (qfc, ir)"
         elif line.find(", QG") != -1:
             pp = "    self._coeff = QG"
+        elif line.find(", QF, ir=None)") != -1:
+            pp = "    self._coeff = (QF, ir)"
         elif line.find(", QF)") != -1:
             pp = "    self._coeff = QF"
+        elif line.find(", F, ir=None)") != -1:
+            pp = "    self._coeff = (F, ir)"
         elif line.find(", F)") != -1:
             pp = "    self._coeff = F"
         elif line.find(", f)") != -1:
@@ -46,4 +50,3 @@ out.append("}")
 fid = open("lininteg_ext.i", "w")
 fid.write("\n".join(out))
 fid.close()
-

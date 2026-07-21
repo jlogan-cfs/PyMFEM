@@ -6,6 +6,7 @@
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"
+using mfem::Ordering;
 %}
 
 %include "../common/mfem_config.i"
@@ -91,4 +92,3 @@ def GetFaceNbrElementVDofs(self, i):
     return self->GetFaceNbrElementVDofs(elem, dofs);
   }
 };
-

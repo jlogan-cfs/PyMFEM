@@ -8,6 +8,7 @@
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"
+#include "../common/pylininteg.hpp"
 #include "../common/pynonlininteg.hpp"  
 %}
 
@@ -31,6 +32,5 @@ import_array();
 %include "fem/hyperbolic.hpp"
 
 #endif
-
 
 

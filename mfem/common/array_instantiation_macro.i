@@ -313,8 +313,10 @@ INSTANTIATE_ARRAY2(XXX, YYY, YYY, USEPTR)
 %ignore mfem::Array<XXX>::DeleteFirst;
 %ignore mfem::Array<XXX>::Unique;
 %ignore mfem::Array<XXX>::PartialSum;
+%ignore mfem::Array<XXX>::Abs;
 %ignore mfem::Array<XXX>::Sum;
 %ignore mfem::Array<XXX>::IsSorted;
+%ignore mfem::Array<XXX>::IsConstant;
 %ignore mfem::Array<XXX>::Save;
 %ignore mfem::Array<XXX>::Max;
 %ignore mfem::Array<XXX>::Min;
@@ -330,8 +332,10 @@ INSTANTIATE_ARRAY2(XXX, YYY, YYY, USEPTR)
 
 %define IGNORE_ARRAY_METHODS_PREMITIVE(XXX)
 %ignore mfem::Array<XXX>::PartialSum;
+%ignore mfem::Array<XXX>::Abs;
 %ignore mfem::Array<XXX>::Sum;
 %ignore mfem::Array<XXX>::IsSorted;
+%ignore mfem::Array<XXX>::IsConstant;
 %ignore mfem::Array<XXX>::Save;
 %ignore mfem::Array<XXX>::Max;
 %ignore mfem::Array<XXX>::Min;
@@ -343,4 +347,3 @@ INSTANTIATE_ARRAY2(XXX, YYY, YYY, USEPTR)
 %ignore mfem::Array2D<XXX>::PrintGZ;
 %ignore mfem::Array2D<XXX>::SaveGZ;
 %enddef
-

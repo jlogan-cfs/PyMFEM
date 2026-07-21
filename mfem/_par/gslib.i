@@ -6,6 +6,8 @@
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"
+using mfem::Ordering;
+using mfem::ParticleVector;
 %}
 
 %include "../common/mfem_config.i"

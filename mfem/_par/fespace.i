@@ -16,6 +16,7 @@
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"
+using namespace mfem;
 %}
 
 %init %{

@@ -7,6 +7,7 @@
 #include "../common/pyintrules.hpp"
 #include "../common/pybilininteg.hpp"
 #include "../common/pynonlininteg.hpp"
+using namespace mfem;
 %}
 
 %init %{

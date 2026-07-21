@@ -1,8 +1,8 @@
 # Parallel MFEM Python wrapper
 set(SWIG_MODULE_NAME "_par")
 
-# Enforce C++11 standard
-set(CMAKE_CXX_STANDARD 11)
+# Enforce the C++17 standard required by MFEM 4.9.
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -130,7 +130,7 @@ foreach(SWIG_INTERFACE ${SWIG_INTERFACES})
         PREFIX ""
         SUFFIX ".${Python_SOABI}.so"
         LINKER_LANGUAGE CXX
-        CXX_STANDARD 11
+        CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
     )
@@ -221,7 +221,7 @@ set_target_properties(${MODULE_NAME}_par PROPERTIES
     PREFIX ""
     SUFFIX ".${Python_SOABI}.so"
     LINKER_LANGUAGE CXX
-    CXX_STANDARD 11
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
@@ -293,7 +293,7 @@ set_target_properties(${MODULE_NAME}_par PROPERTIES
     PREFIX ""
     SUFFIX ".${Python_SOABI}.so"
     LINKER_LANGUAGE CXX
-    CXX_STANDARD 11
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )

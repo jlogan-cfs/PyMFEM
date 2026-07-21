@@ -9,6 +9,7 @@
 #include "fem/complex_fem.hpp"
 #include "linalg/complex_operator.hpp"
 #include "numpy/arrayobject.h"
+#include "../common/io_stream.hpp"
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"

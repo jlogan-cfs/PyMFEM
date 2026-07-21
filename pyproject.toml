@@ -11,7 +11,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "mfem"
-version = "4.7.0.1"
+version = "4.9.1.1"
 description = "MFEM + PyMFEM (finite element method library)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -60,9 +60,9 @@ cmake.build-type = "Release"
 cmake.verbose = true
 
 cmake.args = [
-  "-DCMAKE_CXX_FLAGS=-std=c++11",
-  "-DCMAKE_EXE_LINKER_FLAGS=-std=c++11",
-  "-DCMAKE_SHARED_LINKER_FLAGS=-std=c++11",
+  "-DCMAKE_CXX_FLAGS=-std=c++17",
+  "-DCMAKE_EXE_LINKER_FLAGS=-std=c++17",
+  "-DCMAKE_SHARED_LINKER_FLAGS=-std=c++17",
   "-DCMAKE_POLICY_VERSION_MINIMUM=4.0",
 ]
 
@@ -79,6 +79,7 @@ sdist.include = [
     "examples/",
     "data/",
     "headers/",
+    "scripts/",
     "requirements.txt",
     "CMakeLists.txt",
 ]
@@ -96,7 +97,7 @@ sdist.exclude = [
 # Configuration options that can be set via environment variables or config-settings
 [tool.scikit-build.cmake.define]
 # C++ standard enforcement
-CMAKE_CXX_STANDARD = "11"
+CMAKE_CXX_STANDARD = "17"
 CMAKE_CXX_STANDARD_REQUIRED = "ON"
 CMAKE_CXX_EXTENSIONS = "OFF"
 
@@ -104,8 +105,10 @@ CMAKE_CXX_EXTENSIONS = "OFF"
 BUILD_PARALLEL = {env = "PYMFEM_BUILD_PARALLEL", default = "ON"}
 BUILD_METIS = {env = "PYMFEM_BUILD_METIS", default = "ON"}
 BUILD_HYPRE = {env = "PYMFEM_BUILD_HYPRE", default = "ON"}
+BUILD_HDF5 = {env = "PYMFEM_BUILD_HDF5", default = "ON"}
 BUILD_LIBCEED = {env = "PYMFEM_BUILD_LIBCEED", default = "ON"}
 BUILD_GSLIB = {env = "PYMFEM_BUILD_GSLIB", default = "ON"}
+PYMFEM_REUSE_EXTERNAL = {env = "PYMFEM_REUSE_EXTERNAL", default = "OFF"}
 ENABLE_CUDA = {env = "PYMFEM_ENABLE_CUDA", default = "OFF"}
 # ENABLE_SUITESPARSE = {env = "PYMFEM_ENABLE_SUITESPARSE", default = "OFF"}  # Not supported yet
 ENABLE_LAPACK = {env = "PYMFEM_ENABLE_LAPACK", default = "ON"}

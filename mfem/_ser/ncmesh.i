@@ -36,6 +36,12 @@ XXXPTR_SIZE_IN(mfem::Refinement *data_, int asize, mfem::Refinement)
 
 %immutable embeddings;
 
+// These inspection methods expose protected NCMesh implementation types.
+%ignore mfem::NCMesh::GetNode;
+%ignore mfem::NCMesh::GetFace;
+%ignore mfem::NCMesh::GetElement;
+%ignore mfem::NCMesh::FindFaceNodes;
+
 %include "mesh/ncmesh.hpp"
 
 #ifndef SWIGIMPORTED

@@ -18,4 +18,9 @@ import_array();
 %import "mesh.i"
 %import "gridfunc.i"
 
+// These accessors expose private C++ type aliases that SWIG cannot name in
+// generated wrapper code. Python callers use the field registration API.
+%ignore mfem::ParaViewDataCollection::GetCoeffFieldMap;
+%ignore mfem::ParaViewDataCollection::GetVCoeffFieldMap;
+
 %include "fem/datacollection.hpp"

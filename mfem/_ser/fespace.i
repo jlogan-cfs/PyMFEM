@@ -14,6 +14,7 @@
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"
+using namespace mfem;
 %}
 
 %init %{
@@ -206,4 +207,3 @@ OSTREAM_ADD_DEFAULT_STDOUT_FILE(QuadratureSpace, Save)
     return self->GetBdrElementVDofs(bel, dofs);
   }
 };
-

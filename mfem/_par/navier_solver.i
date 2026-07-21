@@ -2,7 +2,7 @@
 %{
 #include "mfem.hpp"
 #include "numpy/arrayobject.h"
-#include "miniapps/navier/navier_solver.hpp"
+#include "miniapps/fluids/navier/navier_solver.hpp"
 #include "../common/pyoperator.hpp"
 #include "../common/pysolvers.hpp"
 #include "../common/pycoefficient.hpp"
@@ -17,7 +17,7 @@ import_array();
 %}
 
 %inline %{
-#include "miniapps/navier/navier_solver.cpp"
+#include "miniapps/fluids/navier/navier_solver.cpp"
 %}
 
 
@@ -50,5 +50,4 @@ OSTREAM_TYPEMAP(std::ostream&)
 %ignore mfem::navier::NavierSolver::AddPresDirichletBC(ScalarFuncT *f, Array<int> &);
 %ignore mfem::navier::NavierSolver::AddAccelTerm(VecFuncT *f, Array<int> &);
 
-%include "miniapps/navier/navier_solver.hpp"
-
+%include "miniapps/fluids/navier/navier_solver.hpp"

@@ -21,4 +21,8 @@ namespace mfem{
   class FiniteElement;
 }
 
+// MFEM's process-wide polynomial cache owns unique_ptr-backed lookup tables
+// and cannot be replaced by assignment from Python.
+%immutable mfem::poly1d;
+
 %include "fem/fe/fe_base.hpp"

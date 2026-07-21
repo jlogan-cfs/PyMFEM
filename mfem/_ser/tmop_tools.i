@@ -6,6 +6,7 @@
 #include "../common/pycoefficient.hpp"
 #include "../common/pysolvers.hpp"
 #include "../common/pyintrules.hpp"
+using namespace mfem;
 %}
 
 %init %{

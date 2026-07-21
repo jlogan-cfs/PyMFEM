@@ -1,5 +1,11 @@
         <<<  Change Log. >>>
 
+2026 07
+      * MFEM 4.9.1 support
+        - ParaViewHDFDataCollection is available in parallel builds.
+        - Parallel wheels build and statically link MPI-enabled HDF5.
+        - The CMake/SWIG build uses C++17.
+
 2024 08
       * MFEM 4.7 support
         - AttributeSets are supported. ex39 and ex39p are added to demonstrate how to use it from Python
@@ -296,5 +302,4 @@
 2017 10.10      chypre.py
         * CHypreMat::__add__ and CHypreMat::__sub__ was calling CHypreMat without
           specifing col_parts.
-
 

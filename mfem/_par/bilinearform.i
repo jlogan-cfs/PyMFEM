@@ -2,6 +2,7 @@
 %{
 #include "fem/bilinearform.hpp"
 #include "numpy/arrayobject.h"
+#include "../common/io_stream.hpp"
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"
@@ -142,4 +143,3 @@ FORM_SYSTEM_MATRIX_WRAP(SparseMatrix)
 #ifdef MFEM_USE_PETSC
   FORM_SYSTEM_MATRIX_WRAP(PetscParMatrix)
 #endif
-

@@ -32,8 +32,10 @@ namespace mfem{
    %ignore Array<Geometry::Type>::DeleteFirst;
    %ignore Array<Geometry::Type>::Unique;
    %ignore Array<Geometry::Type>::PartialSum;
+   %ignore Array<Geometry::Type>::Abs;
    %ignore Array<Geometry::Type>::Sum;
    %ignore Array<Geometry::Type>::IsSorted;
+   %ignore Array<Geometry::Type>::IsConstant;
    %ignore Array<Geometry::Type>::Save;
    %ignore Array<Geometry::Type>::Max;
    %ignore Array<Geometry::Type>::Min;
@@ -50,6 +52,5 @@ namespace mfem{
 %pythoncode %{
 Geometries = Geometry()
 %}
-
 
 

@@ -7,6 +7,7 @@
 #include "linalg/sparsemat.hpp"
 #include "linalg/hypre.hpp"
 #include "../common/pyoperator.hpp"
+using namespace mfem;
 %}
 // initialization required to return numpy array from SWIG
 %init %{

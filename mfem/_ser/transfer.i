@@ -9,6 +9,7 @@
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"
 #include "../common/pybilininteg.hpp"
+using namespace mfem;
 %}
 
 %init %{
@@ -22,4 +23,3 @@ import_array();
 
 //%import  "../common/pyoperator.hpp"
 %include "fem/transfer.hpp"
-

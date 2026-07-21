@@ -8,6 +8,7 @@
 #include "../common/pyoperator.hpp"
 #include "../common/pysolvers.hpp"
 #include "numpy/arrayobject.h"
+using namespace mfem;
 %}
 
 %init %{

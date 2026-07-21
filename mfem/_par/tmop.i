@@ -7,6 +7,7 @@
 #include "../common/pyintrules.hpp"
 #include "../common/pybilininteg.hpp"
 #include "../common/pynonlininteg.hpp"
+using mfem::Ordering;
 %}
 
 %init %{
@@ -38,4 +39,3 @@ INSTANTIATE_ARRAY0(TMOP_Integrator *, TMOP_Integrator, 1)
 %}
 
 %include "fem/tmop.hpp"
-

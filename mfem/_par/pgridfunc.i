@@ -76,6 +76,20 @@ ISTREAM_TYPEMAP(std::istream&)
 %newobject mfem::ParGridFunction::GetTrueDofs;
 %newobject mfem::ParGridFunction::GetSerialGridFunction;
 
+// MFEM's variant-based projection hook is protected. Ignore the overloaded
+// family, then restore only the two public coefficient overloads.
+%ignore mfem::ParGridFunction::ProjectDiscCoefficient;
+%rename("") mfem::ParGridFunction::ProjectDiscCoefficient(
+    Coefficient &coeff, AvgType type);
+%rename("") mfem::ParGridFunction::ProjectDiscCoefficient(
+    VectorCoefficient &vcoeff, AvgType type);
+
+// PLBound has no default constructor, so these return-by-value wrappers need
+// a dedicated typemap before they can be exposed safely.
+%ignore mfem::ParGridFunction::GetBounds;
+%ignore mfem::ParGridFunction::EstimateFunctionMinimum;
+%ignore mfem::ParGridFunction::EstimateFunctionMaximum;
+
 
 %pythonprepend mfem::ParGridFunction::ParGridFunction %{
 from mfem._par.pmesh import ParMesh

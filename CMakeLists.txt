@@ -15,7 +15,7 @@ include(UseSWIG)
 # (Using direct file operations instead of FetchContent to avoid CMake configuration issues)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -72,8 +72,12 @@ endif()
 option(BUILD_PARALLEL "Build parallel version" OFF)
 option(BUILD_METIS "Build METIS library" OFF)
 option(BUILD_HYPRE "Build HYPRE library" OFF)
+option(BUILD_HDF5 "Build parallel HDF5 library" OFF)
 option(BUILD_LIBCEED "Build libCEED library" OFF)
 option(BUILD_GSLIB "Build gslib library" OFF)
+option(PYMFEM_REUSE_EXTERNAL
+       "Reuse external sources and build artifacts for an incremental local build"
+       OFF)
 option(ENABLE_CUDA "Enable CUDA support" OFF)
 
 # LAPACK will be auto-detected from system or built from source if ENABLE_LAPACK is ON
@@ -206,9 +210,10 @@ endfunction()
 
 # Define external dependency URLs and versions (matching setup_legacy.py)
 set(MFEM_GIT_URL "https://github.com/mfem/mfem.git")
-set(MFEM_GIT_SHA "dc9128ef596e84daf1138aa3046b826bba9d259f")  # v4.7
+set(MFEM_GIT_SHA "c8ef9676e83c93a9037dbdf3bf0f2d741321e632")  # MFEM v4.9.1 with VTKHDF output
 
 set(HYPRE_URL "https://github.com/hypre-space/hypre/archive/v2.28.0.tar.gz")
+set(HDF5_URL "https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_1.14.6.tar.gz")
 set(METIS_URL "https://github.com/mfem/tpls/raw/gh-pages/metis-5.1.0.tar.gz")
 set(LIBCEED_URL "https://github.com/CEED/libCEED/archive/refs/tags/v0.12.0.tar.gz")
 set(GSLIB_URL "https://github.com/Nek5000/gslib/archive/refs/tags/v1.0.8.tar.gz")
@@ -222,29 +227,41 @@ function(download_mfem)
         # Ensure external directory exists
         file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external)
         
-        # Use git clone with specific SHA
+        # Fetch only the pinned commit. The wheel build starts from a clean
+        # source tree, so downloading the full MFEM history adds no value.
         find_package(Git QUIET)
         if(GIT_FOUND)
+            file(MAKE_DIRECTORY ${MFEM_SOURCE})
             execute_process(
-                COMMAND ${GIT_EXECUTABLE} clone ${MFEM_GIT_URL} ${MFEM_SOURCE}
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                RESULT_VARIABLE git_result
+                COMMAND ${GIT_EXECUTABLE} init
+                WORKING_DIRECTORY ${MFEM_SOURCE}
+                RESULT_VARIABLE init_result
             )
-            
-            if(git_result EQUAL "0")
+            execute_process(
+                COMMAND ${GIT_EXECUTABLE} remote add origin ${MFEM_GIT_URL}
+                WORKING_DIRECTORY ${MFEM_SOURCE}
+                RESULT_VARIABLE remote_result
+            )
+
+            if(init_result EQUAL "0" AND remote_result EQUAL "0")
                 execute_process(
-                    COMMAND ${GIT_EXECUTABLE} checkout ${MFEM_GIT_SHA}
+                    COMMAND ${GIT_EXECUTABLE} fetch --depth 1 origin ${MFEM_GIT_SHA}
+                    WORKING_DIRECTORY ${MFEM_SOURCE}
+                    RESULT_VARIABLE fetch_result
+                )
+                execute_process(
+                    COMMAND ${GIT_EXECUTABLE} checkout --detach FETCH_HEAD
                     WORKING_DIRECTORY ${MFEM_SOURCE}
                     RESULT_VARIABLE checkout_result
                 )
-                
-                if(checkout_result EQUAL "0")
+
+                if(fetch_result EQUAL "0" AND checkout_result EQUAL "0")
                     message(STATUS "Successfully downloaded MFEM to ${MFEM_SOURCE}")
                 else()
-                    message(FATAL_ERROR "Failed to checkout MFEM SHA: ${MFEM_GIT_SHA}")
+                    message(FATAL_ERROR "Failed to fetch MFEM SHA: ${MFEM_GIT_SHA}")
                 endif()
             else()
-                message(FATAL_ERROR "Failed to clone MFEM from ${MFEM_GIT_URL}")
+                message(FATAL_ERROR "Failed to initialize MFEM checkout from ${MFEM_GIT_URL}")
             endif()
         else()
             message(FATAL_ERROR "Git not found. Cannot download MFEM automatically.")
@@ -343,13 +360,13 @@ function(build_mfem_serial)
         -DMFEM_THREAD_SAFE=ON
         -DMFEM_USE_OPENMP=OFF
         -DMFEM_USE_SUITESPARSE=OFF
-        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD=17
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
 # Don't set CMAKE_BUILD_WITH_INSTALL_RPATH - let fix_rpath.cmake handle it
         -DCMAKE_INSTALL_PREFIX=${mfem_build_dir}/install
     )
-    
+
     # Add libCEED support if enabled
     if(BUILD_LIBCEED)
         list(APPEND MFEM_SER_CMAKE_ARGS 
@@ -459,7 +476,7 @@ function(build_mfem_parallel)
         -DMFEM_THREAD_SAFE=ON
         -DMFEM_USE_OPENMP=OFF
         -DMFEM_USE_SUITESPARSE=OFF
-        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD=17
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
 # Don't set CMAKE_BUILD_WITH_INSTALL_RPATH - let fix_rpath.cmake handle it
@@ -474,6 +491,14 @@ function(build_mfem_parallel)
         -DMETIS_INCLUDE_DIRS=${CMAKE_CURRENT_SOURCE_DIR}/external/metis/include
         -DMETIS_LIBRARIES=${METIS_LIB_PATH}
     )
+
+    if(BUILD_HDF5)
+        list(APPEND MFEM_PAR_CMAKE_ARGS
+            -DMFEM_USE_HDF5=ON
+            -DHDF5_DIR=${EXT_PREFIX}
+            -DHDF5_USE_STATIC_LIBRARIES=ON
+        )
+    endif()
     
     # Add libCEED support if enabled
     if(BUILD_LIBCEED)
@@ -555,9 +580,14 @@ function(build_mfem_parallel)
 endfunction()
 
 # Download and build dependencies in correct order
-# First, clean up any leftover external directory from previous failed builds
-message(STATUS "Cleaning up any existing external/ directory from previous builds")
-file(REMOVE_RECURSE ${CMAKE_CURRENT_SOURCE_DIR}/external)
+# Isolated wheel builds start from clean third-party sources. Developers can
+# opt into reuse when iterating in a persistent scikit-build directory.
+if(PYMFEM_REUSE_EXTERNAL)
+    message(STATUS "Reusing external/ directory for incremental local build")
+else()
+    message(STATUS "Cleaning up any existing external/ directory from previous builds")
+    file(REMOVE_RECURSE ${CMAKE_CURRENT_SOURCE_DIR}/external)
+endif()
 
 # Download all required external dependencies
 if(BUILD_PARALLEL OR BUILD_METIS)
@@ -566,6 +596,10 @@ endif()
 
 if(BUILD_PARALLEL OR BUILD_HYPRE)
     download_external_tarball(hypre ${HYPRE_URL})
+endif()
+
+if(BUILD_HDF5)
+    download_external_tarball(hdf5 ${HDF5_URL})
 endif()
 
 if(BUILD_LIBCEED)
@@ -618,6 +652,23 @@ if(BUILD_PARALLEL OR BUILD_HYPRE)
         message(FATAL_ERROR "Failed to build HYPRE")
     endif()
     message(STATUS "HYPRE build completed successfully")
+endif()
+
+if(BUILD_HDF5)
+    message(STATUS "Building parallel HDF5 dependency")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND}
+            -DHDF5_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/external/hdf5
+            -DHDF5_INSTALL_DIR=${EXT_PREFIX}
+            -DMPICC_COMMAND=${MPICC_COMMAND}
+            -DCMAKE_BUILD_PARALLEL_LEVEL=${CMAKE_BUILD_PARALLEL_LEVEL}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build_hdf5.cmake
+        RESULT_VARIABLE hdf5_result
+    )
+    if(NOT hdf5_result EQUAL "0")
+        message(FATAL_ERROR "Failed to build HDF5")
+    endif()
+    message(STATUS "HDF5 build completed successfully")
 endif()
 
 if(BUILD_LIBCEED)
@@ -727,8 +778,11 @@ install(DIRECTORY examples/ DESTINATION share/mfem/examples
             FILES_MATCHING PATTERN "*.py"
             PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
-# Clean up external directory after installation
-install(CODE "
-    message(STATUS \"Removing external/ directory after installation\")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_SOURCE_DIR}/external)
-")
+# Clean source-tree dependencies after isolated builds, while retaining them
+# when a developer explicitly requests an incremental local build.
+if(NOT PYMFEM_REUSE_EXTERNAL)
+    install(CODE "
+        message(STATUS \"Removing external/ directory after installation\")
+        execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_SOURCE_DIR}/external)
+    ")
+endif()

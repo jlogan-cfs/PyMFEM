@@ -34,5 +34,17 @@ OSTREAM_TYPEMAP(std::ostream&)
  }
 
 
-%include "linalg/ode.hpp"
+// The public method signatures use a protected ODESolver type alias that
+// generated wrapper code cannot name.
+%ignore mfem::ODESolver::SupportsImplicitVariableType;
+%ignore mfem::BackwardEulerSolver::SupportsImplicitVariableType;
+%ignore mfem::ImplicitMidpointSolver::SupportsImplicitVariableType;
+%ignore mfem::SDIRK23Solver::SupportsImplicitVariableType;
+%ignore mfem::SDIRK34Solver::SupportsImplicitVariableType;
+%ignore mfem::SDIRK33Solver::SupportsImplicitVariableType;
+%ignore mfem::TrapezoidalRuleSolver::SupportsImplicitVariableType;
+%ignore mfem::ESDIRK32Solver::SupportsImplicitVariableType;
+%ignore mfem::ESDIRK33Solver::SupportsImplicitVariableType;
+%ignore mfem::GeneralizedAlphaSolver::SupportsImplicitVariableType;
 
+%include "linalg/ode.hpp"

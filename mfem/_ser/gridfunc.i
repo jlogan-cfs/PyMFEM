@@ -39,6 +39,15 @@ import_array();
 %import "coefficient.i"
 %import "mesh.i"
 %import "fespace.i"
+
+// PLBound has no default constructor, so SWIG's default return-by-value
+// wrapper is invalid. Leave this newer bound-estimation API unwrapped until it
+// has a dedicated value typemap.
+%ignore mfem::GridFunction::GetBounds;
+%ignore mfem::GridFunction::GetElementBounds;
+%ignore mfem::GridFunction::GetElementBoundsAtControlPoints;
+%ignore mfem::GridFunction::EstimateFunctionMinimum;
+%ignore mfem::GridFunction::EstimateFunctionMaximum;
 %import "bilininteg.i"
 %import "linearform.i"
 %import "fespace.i"
@@ -225,4 +234,3 @@ fem/gridfunc.hpp:   void SaveSTL(std::ostream &out, int TimesToRefine = 1);
 OSTREAM_ADD_DEFAULT_FILE(GridFunction, Save)
 OSTREAM_ADD_DEFAULT_FILE(QuadratureFunction, Save)
 #endif
-

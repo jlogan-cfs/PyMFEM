@@ -174,6 +174,6 @@ INSTANTIATE_ARRAY_NUMPYARRAY(uint, unsigned int, NPY_UINT)       // 32bit
 %template(intArray2D) mfem::Array2D<int>;
 %template(doubleArray2D) mfem::Array2D<double>;
 
-/* Array< Array<int> *> */
+/* Array<Array<int>*> has no out-of-line numeric method instantiations. */
 IGNORE_ARRAY_METHODS(mfem::Array<int> *)
 INSTANTIATE_ARRAY2(Array<int> *, Array<int>, intArray, 1)

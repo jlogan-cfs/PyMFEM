@@ -35,6 +35,11 @@ ARRAY_LISTTUPLE_INPUT_SWIGOBJ(mfem::Refinement, 0)
 XXXPTR_SIZE_IN(mfem::Refinement *data_, int asize, mfem::Refinement)
 
 %immutable embeddings;
+// These inspection methods expose protected NCMesh implementation types.
+%ignore mfem::NCMesh::GetNode;
+%ignore mfem::NCMesh::GetFace;
+%ignore mfem::NCMesh::GetElement;
+%ignore mfem::NCMesh::FindFaceNodes;
 %include  "mesh/ncmesh.hpp"
 
  /*
@@ -52,4 +57,3 @@ XXXPTR_SIZE_IN(mfem::Refinement *data_, int asize, mfem::Refinement)
 %import "../common/array_instantiation_macro.i"
 IGNORE_ARRAY_METHODS(mfem::Refinement)
 INSTANTIATE_ARRAY(Refinement)
-

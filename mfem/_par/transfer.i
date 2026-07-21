@@ -9,6 +9,7 @@
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"
 #include "../common/pybilininteg.hpp"
+using namespace mfem;
 %}
 
 %init %{
