@@ -20,6 +20,7 @@ from  mfem._ser.blockoperator import *
 from  mfem._ser.blockvector import *
 from  mfem._ser.blockmatrix import *
 from  mfem._ser.coefficient import *
+from  mfem._ser.integrator import *
 from  mfem._ser.lininteg import *
 from  mfem._ser.socketstream import *
 from  mfem._ser.fe_coll import *
@@ -99,4 +100,3 @@ import mfem._ser.vector as vector
 import mfem._ser.sparsemat as sparsemat
 
 import mfem._ser.tmop_modules as tmop
-

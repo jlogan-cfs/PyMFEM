@@ -177,6 +177,7 @@ XXXPTR_SIZE_IN(mfem::FiniteElementSpace **data_, int asize, mfem::FiniteElementS
 IGNORE_ARRAY_METHODS(mfem::FiniteElementSpace *)
 INSTANTIATE_ARRAY0(FiniteElementSpace *, FiniteElementSpace, 1)
 
+%include "linalg/ordering.hpp"
 %include "fem/fespace.hpp"
 
 /*

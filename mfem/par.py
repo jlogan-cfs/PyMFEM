@@ -28,6 +28,7 @@ from  mfem._par.blockoperator import *
 from  mfem._par.blockvector import *
 from  mfem._par.blockmatrix import *
 from  mfem._par.coefficient import *
+from  mfem._par.integrator import *
 from  mfem._par.lininteg import *
 from  mfem._par.handle import *
 from  mfem._par.mesh import *

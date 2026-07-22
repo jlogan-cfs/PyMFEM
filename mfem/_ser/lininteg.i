@@ -11,7 +11,9 @@
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
 #include "../common/pylininteg.hpp"
+#include "../common/pybilininteg.hpp"
 #include "../common/pyintrules.hpp"
+#include "../common/pynonlininteg.hpp"
 #include "numpy/arrayobject.h"
 %}
 
@@ -30,6 +32,7 @@ import_array();
 %import "coefficient.i"
 %import "../common/exception_director.i"
 %import "fespace.i"
+%import "integrator.i"
 
 %include "../common/lininteg_ext.i"
 
@@ -37,5 +40,3 @@ import_array();
 
 %feature("director") mfem::PyLinearFormIntegrator;
 %include "../common/pylininteg.hpp"
-
-

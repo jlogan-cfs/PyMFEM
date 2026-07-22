@@ -4,6 +4,7 @@
       * MFEM 4.9.1 support
         - ParaViewHDFDataCollection is available in parallel builds.
         - Parallel wheels build and statically link MPI-enabled HDF5.
+        - Ordering and the shared Integrator API remain available after their upstream header split.
         - The CMake/SWIG build uses C++17.
 
 2024 08
@@ -302,4 +303,3 @@
 2017 10.10      chypre.py
         * CHypreMat::__add__ and CHypreMat::__sub__ was calling CHypreMat without
           specifing col_parts.
-
