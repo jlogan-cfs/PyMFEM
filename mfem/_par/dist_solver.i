@@ -7,6 +7,7 @@
 #include "../common/pysolvers.hpp"
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"
+#include "../common/pylininteg.hpp"
 #include "../common/pybilininteg.hpp"
 #include "../common/pynonlininteg.hpp"
 %}
@@ -30,4 +31,3 @@ import_array();
 %import "solvers.i"
 
 %include "miniapps/common/dist_solver.hpp"
-

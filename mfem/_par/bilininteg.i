@@ -3,6 +3,7 @@
 #include "mfem.hpp"
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
+#include "../common/pylininteg.hpp"
 #include "../common/pybilininteg.hpp"
 #include "../common/pyintrules.hpp"
 #include "../common/pynonlininteg.hpp"
@@ -44,4 +45,3 @@ import_array();
 
 %feature("director") mfem::PyBilinearFormIntegrator;
 %include "../common/pybilininteg.hpp"
-

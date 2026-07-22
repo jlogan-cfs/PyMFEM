@@ -4,6 +4,7 @@
 #include "numpy/arrayobject.h"
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
+#include "../common/pylininteg.hpp"
 #include "../common/pyintrules.hpp"
 #include "../common/pybilininteg.hpp"
 #include "../common/pynonlininteg.hpp"
