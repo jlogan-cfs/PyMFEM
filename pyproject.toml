@@ -111,7 +111,7 @@ BUILD_GSLIB = {env = "PYMFEM_BUILD_GSLIB", default = "ON"}
 PYMFEM_REUSE_EXTERNAL = {env = "PYMFEM_REUSE_EXTERNAL", default = "OFF"}
 ENABLE_CUDA = {env = "PYMFEM_ENABLE_CUDA", default = "OFF"}
 # ENABLE_SUITESPARSE = {env = "PYMFEM_ENABLE_SUITESPARSE", default = "OFF"}  # Not supported yet
-ENABLE_LAPACK = {env = "PYMFEM_ENABLE_LAPACK", default = "ON"}
+ENABLE_LAPACK = {env = "PYMFEM_ENABLE_LAPACK", default = "OFF"}
 ENABLE_X86_SIMD = {env = "PYMFEM_ENABLE_X86_SIMD", default = "ON"}
 
 # Path configurations
