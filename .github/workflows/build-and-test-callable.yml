@@ -163,6 +163,7 @@ jobs:
       run: |
         cd test
         python run_examples.py -parallel -verbose -np 2
+        mpiexec -n 2 python test_parallel_mesh_distribution.py
 
     # -------------------------------------------------------------------------------------------------
     # Generate an artifact (output of tests) on failure
