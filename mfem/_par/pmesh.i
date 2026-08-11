@@ -123,6 +123,8 @@ inline void BroadcastString(MPI_Comm comm, int root, std::string &value,
    MPI_Bcast(&size, 1, MPI_UNSIGNED_LONG_LONG, root, comm);
    if (rank != root) { value.resize(static_cast<std::size_t>(size)); }
 
+   // MPI message counts are signed ints, so large diagnostics use the same
+   // bounded transfer size as mesh payloads.
    unsigned long long offset = 0;
    while (offset < size)
    {
@@ -145,6 +147,8 @@ inline void ValidateDistributedMeshArguments(MPI_Comm comm, int root,
                         fix_orientation};
    int minimum[5];
    int maximum[5];
+   // Validate collective arguments collectively. If ranks used different
+   // roots or options, entering the later broadcasts could deadlock.
    MPI_Allreduce(local, minimum, 5, MPI_INT, MPI_MIN, comm);
    MPI_Allreduce(local, maximum, 5, MPI_INT, MPI_MAX, comm);
    for (int i = 0; i < 5; ++i)
@@ -220,6 +224,8 @@ ParMesh *LoadAndDistributeParMesh(
    {
       try
       {
+         // The central memory-saving property of this helper is that this
+         // complete serial mesh exists on root only.
          const double read_start = MPI_Wtime();
          std::ifstream input(mesh_file);
          if (!input)
@@ -248,6 +254,8 @@ ParMesh *LoadAndDistributeParMesh(
       }
    }
 
+   // No worker enters a receive unless every rank knows root initialized the
+   // partitioner successfully.
    MPI_Bcast(&initialized, 1, MPI_INT, root, comm);
    BroadcastString(comm, root, root_error, max_chunk_bytes);
    if (!initialized)
@@ -265,6 +273,9 @@ ParMesh *LoadAndDistributeParMesh(
       const double distribution_start = MPI_Wtime();
       bool can_extract = true;
       MeshPart mesh_part;
+      // Reuse one MeshPart and serialize one destination at a time. Root's
+      // transient storage is therefore bounded by the largest partition, not
+      // the sum of every partition.
       for (int destination = 0; destination < size; ++destination)
       {
          std::string payload;
@@ -300,6 +311,9 @@ ParMesh *LoadAndDistributeParMesh(
          }
          else
          {
+            // Status is always sent first. After an extraction failure, every
+            // remaining worker still receives a failure status and can reach
+            // the collective error path instead of waiting indefinitely.
             MPI_Send(&part_succeeded, 1, MPI_INT, destination,
                      distributed_mesh_status_tag, comm);
             if (part_succeeded)
@@ -324,7 +338,8 @@ ParMesh *LoadAndDistributeParMesh(
       distribution_succeeded = can_extract ? 1 : 0;
       timings(2) = MPI_Wtime() - distribution_start;
 
-      // MeshPartitioner retains references into the serial mesh.
+      // MeshPartitioner retains references into the serial mesh. Destroy it
+      // first, then release the global mesh before allocating the local one.
       partitioner.reset();
       serial_mesh.reset();
    }
@@ -361,6 +376,8 @@ ParMesh *LoadAndDistributeParMesh(
       timings(3) = MPI_Wtime() - receive_start;
    }
 
+   // This broadcast is also a phase boundary: all point-to-point transfers
+   // finish before any rank enters ParMesh's collective constructor.
    MPI_Bcast(&distribution_succeeded, 1, MPI_INT, root, comm);
    BroadcastString(comm, root, distribution_error, max_chunk_bytes);
    if (!distribution_succeeded)
@@ -376,6 +393,8 @@ ParMesh *LoadAndDistributeParMesh(
    const double construction_start = MPI_Wtime();
    try
    {
+      // MeshPart::Print emits MFEM's parallel mesh format, which preserves the
+      // shared-entity groups needed by the stream-based ParMesh constructor.
       std::istringstream input(local_payload);
       parallel_mesh.reset(new ParMesh(comm, input, refine, generate_edges,
                                       fix_orientation));
@@ -393,6 +412,8 @@ ParMesh *LoadAndDistributeParMesh(
    local_payload.clear();
    local_payload.shrink_to_fit();
 
+   // Delay the Python exception until every rank has left the constructor and
+   // agreed whether construction succeeded.
    int all_constructed = 0;
    MPI_Allreduce(&construction_succeeded, &all_constructed, 1, MPI_INT,
                  MPI_MIN, comm);
