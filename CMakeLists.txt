@@ -363,7 +363,12 @@ function(build_mfem_serial)
         -DCMAKE_CXX_STANDARD=17
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
-# Don't set CMAKE_BUILD_WITH_INSTALL_RPATH - let fix_rpath.cmake handle it
+        # The wheel copies this installed library into ``mfem/_ser/.dylibs``.
+        # Resolve its bundled dependencies relative to that final location
+        # instead of retaining paths to the temporary dependency build tree.
+        -DCMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH}
+        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+        -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=OFF
         -DCMAKE_INSTALL_PREFIX=${mfem_build_dir}/install
     )
 
@@ -481,7 +486,12 @@ function(build_mfem_parallel)
         -DCMAKE_CXX_STANDARD=17
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
-# Don't set CMAKE_BUILD_WITH_INSTALL_RPATH - let fix_rpath.cmake handle it
+        # HYPRE, METIS, and libCEED are packaged beside libmfem in
+        # ``mfem/_par/.dylibs``. Keep the nested MFEM install relocatable so
+        # those libraries remain resolvable after the build tree is removed.
+        -DCMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH}
+        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+        -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=OFF
         # Parallel-specific flags
         -DCMAKE_CXX_COMPILER=${MPICXX_COMMAND}
         -DCMAKE_INSTALL_PREFIX=${mfem_build_dir}/install
