@@ -14,6 +14,10 @@ include(UseSWIG)
 # CMake utilities for downloading dependencies
 # (Using direct file operations instead of FetchContent to avoid CMake configuration issues)
 
+# HYPRE 2.28 and libCEED 0.12 require pre-C23 language semantics.
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,8 +26,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Set position independent code for all builds to ensure shared library compatibility
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Also set CFLAGS environment variable to ensure -fPIC is used for Makefile-based builds
-set(ENV{CFLAGS} "-fPIC $ENV{CFLAGS}")
+# Pass C17 and position-independent code flags to dependency builds.
+set(ENV{CFLAGS} "-fPIC $ENV{CFLAGS} -std=gnu17")
 set(ENV{CXXFLAGS} "-fPIC $ENV{CXXFLAGS}")
 message(STATUS "Set global -fPIC flags for shared library compatibility")
 
