@@ -1,0 +1,32 @@
+--- a/fem/fe/fe_fixed_order.cpp
++++ b/fem/fe/fe_fixed_order.cpp
+@@ -1381,11 +1381,9 @@
+                                            Vector &shape) const
+ {
+    real_t x = ip.x, y = ip.y, z = ip.z;
+-   real_t ox = 1.-x-z, oy = 1.-y-z, oz = 1.-z;
+-
+-   real_t tol = 1e-6;
+-
+-   if (oz <= tol)
++   real_t oz = 1.-z, ox = oz-x, oy = oz-y;
++
++   if (oz == 0.)
+    {
+       // We must return the limit of the basis functions as z->1.  In order to
+       // remain inside the pyramid in this limit the x and y coordinates must
+@@ -1411,11 +1409,9 @@
+                                             DenseMatrix &dshape) const
+ {
+    real_t x = ip.x, y = ip.y, z = ip.z;
+-   real_t ox = 1.-x-z, oy = 1.-y-z, oz = 1.-z;
+-
+-   real_t tol = 1e-6;
+-
+-   if (oz <= tol)
++   real_t oz = 1.-z, ox = oz-x, oy = oz-y;
++
++   if (oz == 0.)
+    {
+       // At the apex of the pyramid the gradients of the basis functions are
+       // multivalued and depend on the direction from which the limit is taken.

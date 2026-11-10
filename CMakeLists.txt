@@ -631,6 +631,22 @@ endif()
 # Download MFEM source
 download_mfem()
 
+# Preserve linear pyramid interpolation near the apex until MFEM fixes it.
+find_package(Git REQUIRED)
+set(pyramid_patch ${CMAKE_CURRENT_SOURCE_DIR}/scripts/mfem-pyramid-apex.patch)
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} apply --reverse --check ${pyramid_patch}
+    WORKING_DIRECTORY ${MFEM_SOURCE}
+    RESULT_VARIABLE pyramid_patch_applied OUTPUT_QUIET ERROR_QUIET
+)
+if(NOT pyramid_patch_applied EQUAL 0)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} apply ${pyramid_patch}
+        WORKING_DIRECTORY ${MFEM_SOURCE}
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+endif()
+
 # Build dependencies in order (parallel dependencies must be built before parallel MFEM)
 if(BUILD_PARALLEL OR BUILD_METIS)
     message(STATUS "Building METIS dependency for parallel MFEM")
