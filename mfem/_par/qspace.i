@@ -6,6 +6,7 @@
 #include "../common/pyoperator.hpp"
 #include "../common/pycoefficient.hpp"
 #include "../common/pyintrules.hpp"
+#include "../common/pyqspace.hpp"
 %}
 
 %include "../common/existing_mfem_headers.i"
@@ -27,6 +28,7 @@ OSTREAM_TYPEMAP(std::ostream&)
 ISTREAM_TYPEMAP(std::istream&)
 
 %include "fem/qspace.hpp"
+%include "../common/pyqspace.hpp"
 
 OSTREAM_ADD_DEFAULT_STDOUT_FILE(QuadratureSpace, Save)
 

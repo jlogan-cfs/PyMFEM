@@ -33,6 +33,7 @@ import_array();
 %import "linearform.i"
 %import "fe.i"
 %import "nonlininteg.i"
+%import "qspace.i"
 %include "../common/exception_director.i"
 
 %include "../common/bilininteg_ext.i"

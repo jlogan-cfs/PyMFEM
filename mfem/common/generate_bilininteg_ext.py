@@ -30,6 +30,8 @@ for line in fid.readlines():
             pp = "    self._coeff = vc"
         elif line.find("parent_, i_, j_") != -1:
             pp = "    self._coeff = parent_"
+        elif line.find(", coefficient, space_)") != -1:
+            pp = "    self._coeff = (coefficient, space_)"
         elif line.find("(self)") != -1: 
             pass
         elif line.find("(self, ir=None)") != -1: 

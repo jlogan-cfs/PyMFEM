@@ -307,6 +307,14 @@ namespace mfem {
     self._coeff = vc
 %}
 
+%pythonappend QuadratureMassIntegrator::QuadratureMassIntegrator %{
+    self._coeff = (coefficient, space_)
+%}
+
+%pythonappend QuadratureDiffusionIntegrator::QuadratureDiffusionIntegrator %{
+    self._coeff = (coefficient, space_)
+%}
+
 %pythonappend SumIntegrator::AddIntegrator %{
    if self.own_integs == 1: integ.thisown = 0
 %}
